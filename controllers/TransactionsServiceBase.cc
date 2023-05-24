@@ -423,7 +423,6 @@ void TransactionsServiceBase::update(const HttpRequestPtr &req,
 
 TransactionsServiceBase::TransactionsServiceBase()
     : RestfulController({
-          "id",
           "txuuid",
           "time",
           "useruuid",
@@ -437,7 +436,6 @@ TransactionsServiceBase::TransactionsServiceBase()
     * to clients.
     */
     enableMasquerading({
-        "id", // the alias for the id column.
         "txuuid", // the alias for the txuuid column.
         "time", // the alias for the time column.
         "useruuid", // the alias for the useruuid column.

@@ -15,19 +15,17 @@ using namespace drogon;
 using namespace drogon::orm;
 using namespace drogon_model::test;
 
-const std::string Transactions::Cols::_id = "id";
 const std::string Transactions::Cols::_txuuid = "txuuid";
 const std::string Transactions::Cols::_time = "time";
 const std::string Transactions::Cols::_useruuid = "useruuid";
 const std::string Transactions::Cols::_guuid = "guuid";
 const std::string Transactions::Cols::_count = "count";
-const std::string Transactions::primaryKeyName = "id";
+const std::string Transactions::primaryKeyName = "txuuid";
 const bool Transactions::hasPrimaryKey = true;
 const std::string Transactions::tableName = "transactions";
 
 const std::vector<typename Transactions::MetaData> Transactions::metaData_={
-{"id","int32_t","int(11)",4,1,1,1},
-{"txuuid","std::string","varchar(100)",100,0,0,1},
+{"txuuid","std::string","varchar(100)",100,0,1,1},
 {"time","::trantor::Date","datetime",0,0,0,1},
 {"useruuid","std::string","varchar(100)",100,0,0,1},
 {"guuid","std::string","varchar(100)",100,0,0,1},
@@ -42,10 +40,6 @@ Transactions::Transactions(const Row &r, const ssize_t indexOffset) noexcept
 {
     if(indexOffset < 0)
     {
-        if(!r["id"].isNull())
-        {
-            id_=std::make_shared<int32_t>(r["id"].as<int32_t>());
-        }
         if(!r["txuuid"].isNull())
         {
             txuuid_=std::make_shared<std::string>(r["txuuid"].as<std::string>());
@@ -88,7 +82,7 @@ Transactions::Transactions(const Row &r, const ssize_t indexOffset) noexcept
     else
     {
         size_t offset = (size_t)indexOffset;
-        if(offset + 6 > r.size())
+        if(offset + 5 > r.size())
         {
             LOG_FATAL << "Invalid SQL result for this model";
             return;
@@ -97,14 +91,9 @@ Transactions::Transactions(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 0;
         if(!r[index].isNull())
         {
-            id_=std::make_shared<int32_t>(r[index].as<int32_t>());
-        }
-        index = offset + 1;
-        if(!r[index].isNull())
-        {
             txuuid_=std::make_shared<std::string>(r[index].as<std::string>());
         }
-        index = offset + 2;
+        index = offset + 1;
         if(!r[index].isNull())
         {
             auto timeStr = r[index].as<std::string>();
@@ -127,17 +116,17 @@ Transactions::Transactions(const Row &r, const ssize_t indexOffset) noexcept
                 time_=std::make_shared<::trantor::Date>(t*1000000+decimalNum);
             }
         }
-        index = offset + 3;
+        index = offset + 2;
         if(!r[index].isNull())
         {
             useruuid_=std::make_shared<std::string>(r[index].as<std::string>());
         }
-        index = offset + 4;
+        index = offset + 3;
         if(!r[index].isNull())
         {
             guuid_=std::make_shared<std::string>(r[index].as<std::string>());
         }
-        index = offset + 5;
+        index = offset + 4;
         if(!r[index].isNull())
         {
             count_=std::make_shared<int32_t>(r[index].as<int32_t>());
@@ -148,7 +137,7 @@ Transactions::Transactions(const Row &r, const ssize_t indexOffset) noexcept
 
 Transactions::Transactions(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 6)
+    if(pMasqueradingVector.size() != 5)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -158,7 +147,7 @@ Transactions::Transactions(const Json::Value &pJson, const std::vector<std::stri
         dirtyFlag_[0] = true;
         if(!pJson[pMasqueradingVector[0]].isNull())
         {
-            id_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[0]].asInt64());
+            txuuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[0]].asString());
         }
     }
     if(!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1]))
@@ -166,15 +155,7 @@ Transactions::Transactions(const Json::Value &pJson, const std::vector<std::stri
         dirtyFlag_[1] = true;
         if(!pJson[pMasqueradingVector[1]].isNull())
         {
-            txuuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
-        }
-    }
-    if(!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2]))
-    {
-        dirtyFlag_[2] = true;
-        if(!pJson[pMasqueradingVector[2]].isNull())
-        {
-            auto timeStr = pJson[pMasqueradingVector[2]].asString();
+            auto timeStr = pJson[pMasqueradingVector[1]].asString();
             struct tm stm;
             memset(&stm,0,sizeof(stm));
             auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
@@ -195,12 +176,20 @@ Transactions::Transactions(const Json::Value &pJson, const std::vector<std::stri
             }
         }
     }
+    if(!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2]))
+    {
+        dirtyFlag_[2] = true;
+        if(!pJson[pMasqueradingVector[2]].isNull())
+        {
+            useruuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
+        }
+    }
     if(!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3]))
     {
         dirtyFlag_[3] = true;
         if(!pJson[pMasqueradingVector[3]].isNull())
         {
-            useruuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
+            guuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
         }
     }
     if(!pMasqueradingVector[4].empty() && pJson.isMember(pMasqueradingVector[4]))
@@ -208,32 +197,16 @@ Transactions::Transactions(const Json::Value &pJson, const std::vector<std::stri
         dirtyFlag_[4] = true;
         if(!pJson[pMasqueradingVector[4]].isNull())
         {
-            guuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[4]].asString());
-        }
-    }
-    if(!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5]))
-    {
-        dirtyFlag_[5] = true;
-        if(!pJson[pMasqueradingVector[5]].isNull())
-        {
-            count_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[5]].asInt64());
+            count_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[4]].asInt64());
         }
     }
 }
 
 Transactions::Transactions(const Json::Value &pJson) noexcept(false)
 {
-    if(pJson.isMember("id"))
-    {
-        dirtyFlag_[0]=true;
-        if(!pJson["id"].isNull())
-        {
-            id_=std::make_shared<int32_t>((int32_t)pJson["id"].asInt64());
-        }
-    }
     if(pJson.isMember("txuuid"))
     {
-        dirtyFlag_[1]=true;
+        dirtyFlag_[0]=true;
         if(!pJson["txuuid"].isNull())
         {
             txuuid_=std::make_shared<std::string>(pJson["txuuid"].asString());
@@ -241,7 +214,7 @@ Transactions::Transactions(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("time"))
     {
-        dirtyFlag_[2]=true;
+        dirtyFlag_[1]=true;
         if(!pJson["time"].isNull())
         {
             auto timeStr = pJson["time"].asString();
@@ -267,7 +240,7 @@ Transactions::Transactions(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("useruuid"))
     {
-        dirtyFlag_[3]=true;
+        dirtyFlag_[2]=true;
         if(!pJson["useruuid"].isNull())
         {
             useruuid_=std::make_shared<std::string>(pJson["useruuid"].asString());
@@ -275,7 +248,7 @@ Transactions::Transactions(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("guuid"))
     {
-        dirtyFlag_[4]=true;
+        dirtyFlag_[3]=true;
         if(!pJson["guuid"].isNull())
         {
             guuid_=std::make_shared<std::string>(pJson["guuid"].asString());
@@ -283,7 +256,7 @@ Transactions::Transactions(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("count"))
     {
-        dirtyFlag_[5]=true;
+        dirtyFlag_[4]=true;
         if(!pJson["count"].isNull())
         {
             count_=std::make_shared<int32_t>((int32_t)pJson["count"].asInt64());
@@ -294,7 +267,7 @@ Transactions::Transactions(const Json::Value &pJson) noexcept(false)
 void Transactions::updateByMasqueradedJson(const Json::Value &pJson,
                                             const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 6)
+    if(pMasqueradingVector.size() != 5)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -303,7 +276,7 @@ void Transactions::updateByMasqueradedJson(const Json::Value &pJson,
     {
         if(!pJson[pMasqueradingVector[0]].isNull())
         {
-            id_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[0]].asInt64());
+            txuuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[0]].asString());
         }
     }
     if(!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1]))
@@ -311,15 +284,7 @@ void Transactions::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[1] = true;
         if(!pJson[pMasqueradingVector[1]].isNull())
         {
-            txuuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
-        }
-    }
-    if(!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2]))
-    {
-        dirtyFlag_[2] = true;
-        if(!pJson[pMasqueradingVector[2]].isNull())
-        {
-            auto timeStr = pJson[pMasqueradingVector[2]].asString();
+            auto timeStr = pJson[pMasqueradingVector[1]].asString();
             struct tm stm;
             memset(&stm,0,sizeof(stm));
             auto p = strptime(timeStr.c_str(),"%Y-%m-%d %H:%M:%S",&stm);
@@ -340,12 +305,20 @@ void Transactions::updateByMasqueradedJson(const Json::Value &pJson,
             }
         }
     }
+    if(!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2]))
+    {
+        dirtyFlag_[2] = true;
+        if(!pJson[pMasqueradingVector[2]].isNull())
+        {
+            useruuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
+        }
+    }
     if(!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3]))
     {
         dirtyFlag_[3] = true;
         if(!pJson[pMasqueradingVector[3]].isNull())
         {
-            useruuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
+            guuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
         }
     }
     if(!pMasqueradingVector[4].empty() && pJson.isMember(pMasqueradingVector[4]))
@@ -353,31 +326,15 @@ void Transactions::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[4] = true;
         if(!pJson[pMasqueradingVector[4]].isNull())
         {
-            guuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[4]].asString());
-        }
-    }
-    if(!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5]))
-    {
-        dirtyFlag_[5] = true;
-        if(!pJson[pMasqueradingVector[5]].isNull())
-        {
-            count_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[5]].asInt64());
+            count_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[4]].asInt64());
         }
     }
 }
 
 void Transactions::updateByJson(const Json::Value &pJson) noexcept(false)
 {
-    if(pJson.isMember("id"))
-    {
-        if(!pJson["id"].isNull())
-        {
-            id_=std::make_shared<int32_t>((int32_t)pJson["id"].asInt64());
-        }
-    }
     if(pJson.isMember("txuuid"))
     {
-        dirtyFlag_[1] = true;
         if(!pJson["txuuid"].isNull())
         {
             txuuid_=std::make_shared<std::string>(pJson["txuuid"].asString());
@@ -385,7 +342,7 @@ void Transactions::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("time"))
     {
-        dirtyFlag_[2] = true;
+        dirtyFlag_[1] = true;
         if(!pJson["time"].isNull())
         {
             auto timeStr = pJson["time"].asString();
@@ -411,7 +368,7 @@ void Transactions::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("useruuid"))
     {
-        dirtyFlag_[3] = true;
+        dirtyFlag_[2] = true;
         if(!pJson["useruuid"].isNull())
         {
             useruuid_=std::make_shared<std::string>(pJson["useruuid"].asString());
@@ -419,7 +376,7 @@ void Transactions::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("guuid"))
     {
-        dirtyFlag_[4] = true;
+        dirtyFlag_[3] = true;
         if(!pJson["guuid"].isNull())
         {
             guuid_=std::make_shared<std::string>(pJson["guuid"].asString());
@@ -427,34 +384,12 @@ void Transactions::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("count"))
     {
-        dirtyFlag_[5] = true;
+        dirtyFlag_[4] = true;
         if(!pJson["count"].isNull())
         {
             count_=std::make_shared<int32_t>((int32_t)pJson["count"].asInt64());
         }
     }
-}
-
-const int32_t &Transactions::getValueOfId() const noexcept
-{
-    const static int32_t defaultValue = int32_t();
-    if(id_)
-        return *id_;
-    return defaultValue;
-}
-const std::shared_ptr<int32_t> &Transactions::getId() const noexcept
-{
-    return id_;
-}
-void Transactions::setId(const int32_t &pId) noexcept
-{
-    id_ = std::make_shared<int32_t>(pId);
-    dirtyFlag_[0] = true;
-}
-const typename Transactions::PrimaryKeyType & Transactions::getPrimaryKey() const
-{
-    assert(id_);
-    return *id_;
 }
 
 const std::string &Transactions::getValueOfTxuuid() const noexcept
@@ -471,12 +406,17 @@ const std::shared_ptr<std::string> &Transactions::getTxuuid() const noexcept
 void Transactions::setTxuuid(const std::string &pTxuuid) noexcept
 {
     txuuid_ = std::make_shared<std::string>(pTxuuid);
-    dirtyFlag_[1] = true;
+    dirtyFlag_[0] = true;
 }
 void Transactions::setTxuuid(std::string &&pTxuuid) noexcept
 {
     txuuid_ = std::make_shared<std::string>(std::move(pTxuuid));
-    dirtyFlag_[1] = true;
+    dirtyFlag_[0] = true;
+}
+const typename Transactions::PrimaryKeyType & Transactions::getPrimaryKey() const
+{
+    assert(txuuid_);
+    return *txuuid_;
 }
 
 const ::trantor::Date &Transactions::getValueOfTime() const noexcept
@@ -493,7 +433,7 @@ const std::shared_ptr<::trantor::Date> &Transactions::getTime() const noexcept
 void Transactions::setTime(const ::trantor::Date &pTime) noexcept
 {
     time_ = std::make_shared<::trantor::Date>(pTime);
-    dirtyFlag_[2] = true;
+    dirtyFlag_[1] = true;
 }
 
 const std::string &Transactions::getValueOfUseruuid() const noexcept
@@ -510,12 +450,12 @@ const std::shared_ptr<std::string> &Transactions::getUseruuid() const noexcept
 void Transactions::setUseruuid(const std::string &pUseruuid) noexcept
 {
     useruuid_ = std::make_shared<std::string>(pUseruuid);
-    dirtyFlag_[3] = true;
+    dirtyFlag_[2] = true;
 }
 void Transactions::setUseruuid(std::string &&pUseruuid) noexcept
 {
     useruuid_ = std::make_shared<std::string>(std::move(pUseruuid));
-    dirtyFlag_[3] = true;
+    dirtyFlag_[2] = true;
 }
 
 const std::string &Transactions::getValueOfGuuid() const noexcept
@@ -532,12 +472,12 @@ const std::shared_ptr<std::string> &Transactions::getGuuid() const noexcept
 void Transactions::setGuuid(const std::string &pGuuid) noexcept
 {
     guuid_ = std::make_shared<std::string>(pGuuid);
-    dirtyFlag_[4] = true;
+    dirtyFlag_[3] = true;
 }
 void Transactions::setGuuid(std::string &&pGuuid) noexcept
 {
     guuid_ = std::make_shared<std::string>(std::move(pGuuid));
-    dirtyFlag_[4] = true;
+    dirtyFlag_[3] = true;
 }
 
 const int32_t &Transactions::getValueOfCount() const noexcept
@@ -554,12 +494,11 @@ const std::shared_ptr<int32_t> &Transactions::getCount() const noexcept
 void Transactions::setCount(const int32_t &pCount) noexcept
 {
     count_ = std::make_shared<int32_t>(pCount);
-    dirtyFlag_[5] = true;
+    dirtyFlag_[4] = true;
 }
 
 void Transactions::updateId(const uint64_t id)
 {
-    id_ = std::make_shared<int32_t>(static_cast<int32_t>(id));
 }
 
 const std::vector<std::string> &Transactions::insertColumns() noexcept
@@ -576,7 +515,7 @@ const std::vector<std::string> &Transactions::insertColumns() noexcept
 
 void Transactions::outputArgs(drogon::orm::internal::SqlBinder &binder) const
 {
-    if(dirtyFlag_[1])
+    if(dirtyFlag_[0])
     {
         if(getTxuuid())
         {
@@ -587,7 +526,7 @@ void Transactions::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[2])
+    if(dirtyFlag_[1])
     {
         if(getTime())
         {
@@ -598,7 +537,7 @@ void Transactions::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[3])
+    if(dirtyFlag_[2])
     {
         if(getUseruuid())
         {
@@ -609,7 +548,7 @@ void Transactions::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[4])
+    if(dirtyFlag_[3])
     {
         if(getGuuid())
         {
@@ -620,7 +559,7 @@ void Transactions::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[5])
+    if(dirtyFlag_[4])
     {
         if(getCount())
         {
@@ -636,6 +575,10 @@ void Transactions::outputArgs(drogon::orm::internal::SqlBinder &binder) const
 const std::vector<std::string> Transactions::updateColumns() const
 {
     std::vector<std::string> ret;
+    if(dirtyFlag_[0])
+    {
+        ret.push_back(getColumnName(0));
+    }
     if(dirtyFlag_[1])
     {
         ret.push_back(getColumnName(1));
@@ -652,16 +595,12 @@ const std::vector<std::string> Transactions::updateColumns() const
     {
         ret.push_back(getColumnName(4));
     }
-    if(dirtyFlag_[5])
-    {
-        ret.push_back(getColumnName(5));
-    }
     return ret;
 }
 
 void Transactions::updateArgs(drogon::orm::internal::SqlBinder &binder) const
 {
-    if(dirtyFlag_[1])
+    if(dirtyFlag_[0])
     {
         if(getTxuuid())
         {
@@ -672,7 +611,7 @@ void Transactions::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[2])
+    if(dirtyFlag_[1])
     {
         if(getTime())
         {
@@ -683,7 +622,7 @@ void Transactions::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[3])
+    if(dirtyFlag_[2])
     {
         if(getUseruuid())
         {
@@ -694,7 +633,7 @@ void Transactions::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[4])
+    if(dirtyFlag_[3])
     {
         if(getGuuid())
         {
@@ -705,7 +644,7 @@ void Transactions::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[5])
+    if(dirtyFlag_[4])
     {
         if(getCount())
         {
@@ -720,14 +659,6 @@ void Transactions::updateArgs(drogon::orm::internal::SqlBinder &binder) const
 Json::Value Transactions::toJson() const
 {
     Json::Value ret;
-    if(getId())
-    {
-        ret["id"]=getValueOfId();
-    }
-    else
-    {
-        ret["id"]=Json::Value();
-    }
     if(getTxuuid())
     {
         ret["txuuid"]=getValueOfTxuuid();
@@ -775,13 +706,13 @@ Json::Value Transactions::toMasqueradedJson(
     const std::vector<std::string> &pMasqueradingVector) const
 {
     Json::Value ret;
-    if(pMasqueradingVector.size() == 6)
+    if(pMasqueradingVector.size() == 5)
     {
         if(!pMasqueradingVector[0].empty())
         {
-            if(getId())
+            if(getTxuuid())
             {
-                ret[pMasqueradingVector[0]]=getValueOfId();
+                ret[pMasqueradingVector[0]]=getValueOfTxuuid();
             }
             else
             {
@@ -790,9 +721,9 @@ Json::Value Transactions::toMasqueradedJson(
         }
         if(!pMasqueradingVector[1].empty())
         {
-            if(getTxuuid())
+            if(getTime())
             {
-                ret[pMasqueradingVector[1]]=getValueOfTxuuid();
+                ret[pMasqueradingVector[1]]=getTime()->toDbStringLocal();
             }
             else
             {
@@ -801,9 +732,9 @@ Json::Value Transactions::toMasqueradedJson(
         }
         if(!pMasqueradingVector[2].empty())
         {
-            if(getTime())
+            if(getUseruuid())
             {
-                ret[pMasqueradingVector[2]]=getTime()->toDbStringLocal();
+                ret[pMasqueradingVector[2]]=getValueOfUseruuid();
             }
             else
             {
@@ -812,9 +743,9 @@ Json::Value Transactions::toMasqueradedJson(
         }
         if(!pMasqueradingVector[3].empty())
         {
-            if(getUseruuid())
+            if(getGuuid())
             {
-                ret[pMasqueradingVector[3]]=getValueOfUseruuid();
+                ret[pMasqueradingVector[3]]=getValueOfGuuid();
             }
             else
             {
@@ -823,37 +754,18 @@ Json::Value Transactions::toMasqueradedJson(
         }
         if(!pMasqueradingVector[4].empty())
         {
-            if(getGuuid())
+            if(getCount())
             {
-                ret[pMasqueradingVector[4]]=getValueOfGuuid();
+                ret[pMasqueradingVector[4]]=getValueOfCount();
             }
             else
             {
                 ret[pMasqueradingVector[4]]=Json::Value();
             }
         }
-        if(!pMasqueradingVector[5].empty())
-        {
-            if(getCount())
-            {
-                ret[pMasqueradingVector[5]]=getValueOfCount();
-            }
-            else
-            {
-                ret[pMasqueradingVector[5]]=Json::Value();
-            }
-        }
         return ret;
     }
     LOG_ERROR << "Masquerade failed";
-    if(getId())
-    {
-        ret["id"]=getValueOfId();
-    }
-    else
-    {
-        ret["id"]=Json::Value();
-    }
     if(getTxuuid())
     {
         ret["txuuid"]=getValueOfTxuuid();
@@ -899,14 +811,9 @@ Json::Value Transactions::toMasqueradedJson(
 
 bool Transactions::validateJsonForCreation(const Json::Value &pJson, std::string &err)
 {
-    if(pJson.isMember("id"))
-    {
-        if(!validJsonOfField(0, "id", pJson["id"], err, true))
-            return false;
-    }
     if(pJson.isMember("txuuid"))
     {
-        if(!validJsonOfField(1, "txuuid", pJson["txuuid"], err, true))
+        if(!validJsonOfField(0, "txuuid", pJson["txuuid"], err, true))
             return false;
     }
     else
@@ -916,7 +823,7 @@ bool Transactions::validateJsonForCreation(const Json::Value &pJson, std::string
     }
     if(pJson.isMember("time"))
     {
-        if(!validJsonOfField(2, "time", pJson["time"], err, true))
+        if(!validJsonOfField(1, "time", pJson["time"], err, true))
             return false;
     }
     else
@@ -926,7 +833,7 @@ bool Transactions::validateJsonForCreation(const Json::Value &pJson, std::string
     }
     if(pJson.isMember("useruuid"))
     {
-        if(!validJsonOfField(3, "useruuid", pJson["useruuid"], err, true))
+        if(!validJsonOfField(2, "useruuid", pJson["useruuid"], err, true))
             return false;
     }
     else
@@ -936,7 +843,7 @@ bool Transactions::validateJsonForCreation(const Json::Value &pJson, std::string
     }
     if(pJson.isMember("guuid"))
     {
-        if(!validJsonOfField(4, "guuid", pJson["guuid"], err, true))
+        if(!validJsonOfField(3, "guuid", pJson["guuid"], err, true))
             return false;
     }
     else
@@ -946,7 +853,7 @@ bool Transactions::validateJsonForCreation(const Json::Value &pJson, std::string
     }
     if(pJson.isMember("count"))
     {
-        if(!validJsonOfField(5, "count", pJson["count"], err, true))
+        if(!validJsonOfField(4, "count", pJson["count"], err, true))
             return false;
     }
     else
@@ -960,7 +867,7 @@ bool Transactions::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                                                       const std::vector<std::string> &pMasqueradingVector,
                                                       std::string &err)
 {
-    if(pMasqueradingVector.size() != 6)
+    if(pMasqueradingVector.size() != 5)
     {
         err = "Bad masquerading vector";
         return false;
@@ -973,6 +880,11 @@ bool Transactions::validateMasqueradedJsonForCreation(const Json::Value &pJson,
               if(!validJsonOfField(0, pMasqueradingVector[0], pJson[pMasqueradingVector[0]], err, true))
                   return false;
           }
+        else
+        {
+            err="The " + pMasqueradingVector[0] + " column cannot be null";
+            return false;
+        }
       }
       if(!pMasqueradingVector[1].empty())
       {
@@ -1026,19 +938,6 @@ bool Transactions::validateMasqueradedJsonForCreation(const Json::Value &pJson,
             return false;
         }
       }
-      if(!pMasqueradingVector[5].empty())
-      {
-          if(pJson.isMember(pMasqueradingVector[5]))
-          {
-              if(!validJsonOfField(5, pMasqueradingVector[5], pJson[pMasqueradingVector[5]], err, true))
-                  return false;
-          }
-        else
-        {
-            err="The " + pMasqueradingVector[5] + " column cannot be null";
-            return false;
-        }
-      }
     }
     catch(const Json::LogicError &e)
     {
@@ -1049,9 +948,9 @@ bool Transactions::validateMasqueradedJsonForCreation(const Json::Value &pJson,
 }
 bool Transactions::validateJsonForUpdate(const Json::Value &pJson, std::string &err)
 {
-    if(pJson.isMember("id"))
+    if(pJson.isMember("txuuid"))
     {
-        if(!validJsonOfField(0, "id", pJson["id"], err, false))
+        if(!validJsonOfField(0, "txuuid", pJson["txuuid"], err, false))
             return false;
     }
     else
@@ -1059,29 +958,24 @@ bool Transactions::validateJsonForUpdate(const Json::Value &pJson, std::string &
         err = "The value of primary key must be set in the json object for update";
         return false;
     }
-    if(pJson.isMember("txuuid"))
-    {
-        if(!validJsonOfField(1, "txuuid", pJson["txuuid"], err, false))
-            return false;
-    }
     if(pJson.isMember("time"))
     {
-        if(!validJsonOfField(2, "time", pJson["time"], err, false))
+        if(!validJsonOfField(1, "time", pJson["time"], err, false))
             return false;
     }
     if(pJson.isMember("useruuid"))
     {
-        if(!validJsonOfField(3, "useruuid", pJson["useruuid"], err, false))
+        if(!validJsonOfField(2, "useruuid", pJson["useruuid"], err, false))
             return false;
     }
     if(pJson.isMember("guuid"))
     {
-        if(!validJsonOfField(4, "guuid", pJson["guuid"], err, false))
+        if(!validJsonOfField(3, "guuid", pJson["guuid"], err, false))
             return false;
     }
     if(pJson.isMember("count"))
     {
-        if(!validJsonOfField(5, "count", pJson["count"], err, false))
+        if(!validJsonOfField(4, "count", pJson["count"], err, false))
             return false;
     }
     return true;
@@ -1090,7 +984,7 @@ bool Transactions::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
                                                     const std::vector<std::string> &pMasqueradingVector,
                                                     std::string &err)
 {
-    if(pMasqueradingVector.size() != 6)
+    if(pMasqueradingVector.size() != 5)
     {
         err = "Bad masquerading vector";
         return false;
@@ -1126,11 +1020,6 @@ bool Transactions::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
           if(!validJsonOfField(4, pMasqueradingVector[4], pJson[pMasqueradingVector[4]], err, false))
               return false;
       }
-      if(!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5]))
-      {
-          if(!validJsonOfField(5, pMasqueradingVector[5], pJson[pMasqueradingVector[5]], err, false))
-              return false;
-      }
     }
     catch(const Json::LogicError &e)
     {
@@ -1153,18 +1042,34 @@ bool Transactions::validJsonOfField(size_t index,
                 err="The " + fieldName + " column cannot be null";
                 return false;
             }
-            if(isForCreation)
+            if(!pJson.isString())
             {
-                err="The automatic primary key cannot be set";
+                err="Type error in the "+fieldName+" field";
                 return false;
             }
-            if(!pJson.isInt())
+            // asString().length() creates a string object, is there any better way to validate the length?
+            if(pJson.isString() && pJson.asString().length() > 100)
+            {
+                err="String length exceeds limit for the " +
+                    fieldName +
+                    " field (the maximum value is 100)";
+                return false;
+            }
+
+            break;
+        case 1:
+            if(pJson.isNull())
+            {
+                err="The " + fieldName + " column cannot be null";
+                return false;
+            }
+            if(!pJson.isString())
             {
                 err="Type error in the "+fieldName+" field";
                 return false;
             }
             break;
-        case 1:
+        case 2:
             if(pJson.isNull())
             {
                 err="The " + fieldName + " column cannot be null";
@@ -1184,18 +1089,6 @@ bool Transactions::validJsonOfField(size_t index,
                 return false;
             }
 
-            break;
-        case 2:
-            if(pJson.isNull())
-            {
-                err="The " + fieldName + " column cannot be null";
-                return false;
-            }
-            if(!pJson.isString())
-            {
-                err="Type error in the "+fieldName+" field";
-                return false;
-            }
             break;
         case 3:
             if(pJson.isNull())
@@ -1219,27 +1112,6 @@ bool Transactions::validJsonOfField(size_t index,
 
             break;
         case 4:
-            if(pJson.isNull())
-            {
-                err="The " + fieldName + " column cannot be null";
-                return false;
-            }
-            if(!pJson.isString())
-            {
-                err="Type error in the "+fieldName+" field";
-                return false;
-            }
-            // asString().length() creates a string object, is there any better way to validate the length?
-            if(pJson.isString() && pJson.asString().length() > 100)
-            {
-                err="String length exceeds limit for the " +
-                    fieldName +
-                    " field (the maximum value is 100)";
-                return false;
-            }
-
-            break;
-        case 5:
             if(pJson.isNull())
             {
                 err="The " + fieldName + " column cannot be null";

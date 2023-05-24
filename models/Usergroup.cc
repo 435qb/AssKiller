@@ -16,18 +16,16 @@ using namespace drogon;
 using namespace drogon::orm;
 using namespace drogon_model::test;
 
-const std::string Usergroup::Cols::_id = "id";
 const std::string Usergroup::Cols::_uuid = "uuid";
 const std::string Usergroup::Cols::_is_deleted = "is_deleted";
 const std::string Usergroup::Cols::_nextuuid = "nextuuid";
 const std::string Usergroup::Cols::_count = "count";
-const std::string Usergroup::primaryKeyName = "id";
+const std::string Usergroup::primaryKeyName = "uuid";
 const bool Usergroup::hasPrimaryKey = true;
 const std::string Usergroup::tableName = "usergroup";
 
 const std::vector<typename Usergroup::MetaData> Usergroup::metaData_={
-{"id","int32_t","int(11)",4,1,1,1},
-{"uuid","std::string","varchar(100)",100,0,0,1},
+{"uuid","std::string","varchar(100)",100,0,1,1},
 {"is_deleted","int8_t","tinyint(1)",1,0,0,1},
 {"nextuuid","std::string","varchar(100)",100,0,0,1},
 {"count","int32_t","int(11)",4,0,0,1}
@@ -41,10 +39,6 @@ Usergroup::Usergroup(const Row &r, const ssize_t indexOffset) noexcept
 {
     if(indexOffset < 0)
     {
-        if(!r["id"].isNull())
-        {
-            id_=std::make_shared<int32_t>(r["id"].as<int32_t>());
-        }
         if(!r["uuid"].isNull())
         {
             uuid_=std::make_shared<std::string>(r["uuid"].as<std::string>());
@@ -65,7 +59,7 @@ Usergroup::Usergroup(const Row &r, const ssize_t indexOffset) noexcept
     else
     {
         size_t offset = (size_t)indexOffset;
-        if(offset + 5 > r.size())
+        if(offset + 4 > r.size())
         {
             LOG_FATAL << "Invalid SQL result for this model";
             return;
@@ -74,24 +68,19 @@ Usergroup::Usergroup(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 0;
         if(!r[index].isNull())
         {
-            id_=std::make_shared<int32_t>(r[index].as<int32_t>());
+            uuid_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 1;
         if(!r[index].isNull())
         {
-            uuid_=std::make_shared<std::string>(r[index].as<std::string>());
+            isDeleted_=std::make_shared<int8_t>(r[index].as<int8_t>());
         }
         index = offset + 2;
         if(!r[index].isNull())
         {
-            isDeleted_=std::make_shared<int8_t>(r[index].as<int8_t>());
-        }
-        index = offset + 3;
-        if(!r[index].isNull())
-        {
             nextuuid_=std::make_shared<std::string>(r[index].as<std::string>());
         }
-        index = offset + 4;
+        index = offset + 3;
         if(!r[index].isNull())
         {
             count_=std::make_shared<int32_t>(r[index].as<int32_t>());
@@ -102,7 +91,7 @@ Usergroup::Usergroup(const Row &r, const ssize_t indexOffset) noexcept
 
 Usergroup::Usergroup(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 5)
+    if(pMasqueradingVector.size() != 4)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -112,7 +101,7 @@ Usergroup::Usergroup(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[0] = true;
         if(!pJson[pMasqueradingVector[0]].isNull())
         {
-            id_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[0]].asInt64());
+            uuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[0]].asString());
         }
     }
     if(!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1]))
@@ -120,7 +109,7 @@ Usergroup::Usergroup(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[1] = true;
         if(!pJson[pMasqueradingVector[1]].isNull())
         {
-            uuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[1]].asInt64());
         }
     }
     if(!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2]))
@@ -128,7 +117,7 @@ Usergroup::Usergroup(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[2] = true;
         if(!pJson[pMasqueradingVector[2]].isNull())
         {
-            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[2]].asInt64());
+            nextuuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
         }
     }
     if(!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3]))
@@ -136,32 +125,16 @@ Usergroup::Usergroup(const Json::Value &pJson, const std::vector<std::string> &p
         dirtyFlag_[3] = true;
         if(!pJson[pMasqueradingVector[3]].isNull())
         {
-            nextuuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
-        }
-    }
-    if(!pMasqueradingVector[4].empty() && pJson.isMember(pMasqueradingVector[4]))
-    {
-        dirtyFlag_[4] = true;
-        if(!pJson[pMasqueradingVector[4]].isNull())
-        {
-            count_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[4]].asInt64());
+            count_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[3]].asInt64());
         }
     }
 }
 
 Usergroup::Usergroup(const Json::Value &pJson) noexcept(false)
 {
-    if(pJson.isMember("id"))
-    {
-        dirtyFlag_[0]=true;
-        if(!pJson["id"].isNull())
-        {
-            id_=std::make_shared<int32_t>((int32_t)pJson["id"].asInt64());
-        }
-    }
     if(pJson.isMember("uuid"))
     {
-        dirtyFlag_[1]=true;
+        dirtyFlag_[0]=true;
         if(!pJson["uuid"].isNull())
         {
             uuid_=std::make_shared<std::string>(pJson["uuid"].asString());
@@ -169,7 +142,7 @@ Usergroup::Usergroup(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("is_deleted"))
     {
-        dirtyFlag_[2]=true;
+        dirtyFlag_[1]=true;
         if(!pJson["is_deleted"].isNull())
         {
             isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
@@ -177,7 +150,7 @@ Usergroup::Usergroup(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("nextuuid"))
     {
-        dirtyFlag_[3]=true;
+        dirtyFlag_[2]=true;
         if(!pJson["nextuuid"].isNull())
         {
             nextuuid_=std::make_shared<std::string>(pJson["nextuuid"].asString());
@@ -185,7 +158,7 @@ Usergroup::Usergroup(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("count"))
     {
-        dirtyFlag_[4]=true;
+        dirtyFlag_[3]=true;
         if(!pJson["count"].isNull())
         {
             count_=std::make_shared<int32_t>((int32_t)pJson["count"].asInt64());
@@ -196,7 +169,7 @@ Usergroup::Usergroup(const Json::Value &pJson) noexcept(false)
 void Usergroup::updateByMasqueradedJson(const Json::Value &pJson,
                                             const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 5)
+    if(pMasqueradingVector.size() != 4)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -205,7 +178,7 @@ void Usergroup::updateByMasqueradedJson(const Json::Value &pJson,
     {
         if(!pJson[pMasqueradingVector[0]].isNull())
         {
-            id_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[0]].asInt64());
+            uuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[0]].asString());
         }
     }
     if(!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1]))
@@ -213,7 +186,7 @@ void Usergroup::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[1] = true;
         if(!pJson[pMasqueradingVector[1]].isNull())
         {
-            uuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
+            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[1]].asInt64());
         }
     }
     if(!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2]))
@@ -221,7 +194,7 @@ void Usergroup::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[2] = true;
         if(!pJson[pMasqueradingVector[2]].isNull())
         {
-            isDeleted_=std::make_shared<int8_t>((int8_t)pJson[pMasqueradingVector[2]].asInt64());
+            nextuuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
         }
     }
     if(!pMasqueradingVector[3].empty() && pJson.isMember(pMasqueradingVector[3]))
@@ -229,31 +202,15 @@ void Usergroup::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[3] = true;
         if(!pJson[pMasqueradingVector[3]].isNull())
         {
-            nextuuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[3]].asString());
-        }
-    }
-    if(!pMasqueradingVector[4].empty() && pJson.isMember(pMasqueradingVector[4]))
-    {
-        dirtyFlag_[4] = true;
-        if(!pJson[pMasqueradingVector[4]].isNull())
-        {
-            count_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[4]].asInt64());
+            count_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[3]].asInt64());
         }
     }
 }
 
 void Usergroup::updateByJson(const Json::Value &pJson) noexcept(false)
 {
-    if(pJson.isMember("id"))
-    {
-        if(!pJson["id"].isNull())
-        {
-            id_=std::make_shared<int32_t>((int32_t)pJson["id"].asInt64());
-        }
-    }
     if(pJson.isMember("uuid"))
     {
-        dirtyFlag_[1] = true;
         if(!pJson["uuid"].isNull())
         {
             uuid_=std::make_shared<std::string>(pJson["uuid"].asString());
@@ -261,7 +218,7 @@ void Usergroup::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("is_deleted"))
     {
-        dirtyFlag_[2] = true;
+        dirtyFlag_[1] = true;
         if(!pJson["is_deleted"].isNull())
         {
             isDeleted_=std::make_shared<int8_t>((int8_t)pJson["is_deleted"].asInt64());
@@ -269,7 +226,7 @@ void Usergroup::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("nextuuid"))
     {
-        dirtyFlag_[3] = true;
+        dirtyFlag_[2] = true;
         if(!pJson["nextuuid"].isNull())
         {
             nextuuid_=std::make_shared<std::string>(pJson["nextuuid"].asString());
@@ -277,34 +234,12 @@ void Usergroup::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("count"))
     {
-        dirtyFlag_[4] = true;
+        dirtyFlag_[3] = true;
         if(!pJson["count"].isNull())
         {
             count_=std::make_shared<int32_t>((int32_t)pJson["count"].asInt64());
         }
     }
-}
-
-const int32_t &Usergroup::getValueOfId() const noexcept
-{
-    const static int32_t defaultValue = int32_t();
-    if(id_)
-        return *id_;
-    return defaultValue;
-}
-const std::shared_ptr<int32_t> &Usergroup::getId() const noexcept
-{
-    return id_;
-}
-void Usergroup::setId(const int32_t &pId) noexcept
-{
-    id_ = std::make_shared<int32_t>(pId);
-    dirtyFlag_[0] = true;
-}
-const typename Usergroup::PrimaryKeyType & Usergroup::getPrimaryKey() const
-{
-    assert(id_);
-    return *id_;
 }
 
 const std::string &Usergroup::getValueOfUuid() const noexcept
@@ -321,12 +256,17 @@ const std::shared_ptr<std::string> &Usergroup::getUuid() const noexcept
 void Usergroup::setUuid(const std::string &pUuid) noexcept
 {
     uuid_ = std::make_shared<std::string>(pUuid);
-    dirtyFlag_[1] = true;
+    dirtyFlag_[0] = true;
 }
 void Usergroup::setUuid(std::string &&pUuid) noexcept
 {
     uuid_ = std::make_shared<std::string>(std::move(pUuid));
-    dirtyFlag_[1] = true;
+    dirtyFlag_[0] = true;
+}
+const typename Usergroup::PrimaryKeyType & Usergroup::getPrimaryKey() const
+{
+    assert(uuid_);
+    return *uuid_;
 }
 
 const int8_t &Usergroup::getValueOfIsDeleted() const noexcept
@@ -343,7 +283,7 @@ const std::shared_ptr<int8_t> &Usergroup::getIsDeleted() const noexcept
 void Usergroup::setIsDeleted(const int8_t &pIsDeleted) noexcept
 {
     isDeleted_ = std::make_shared<int8_t>(pIsDeleted);
-    dirtyFlag_[2] = true;
+    dirtyFlag_[1] = true;
 }
 
 const std::string &Usergroup::getValueOfNextuuid() const noexcept
@@ -360,12 +300,12 @@ const std::shared_ptr<std::string> &Usergroup::getNextuuid() const noexcept
 void Usergroup::setNextuuid(const std::string &pNextuuid) noexcept
 {
     nextuuid_ = std::make_shared<std::string>(pNextuuid);
-    dirtyFlag_[3] = true;
+    dirtyFlag_[2] = true;
 }
 void Usergroup::setNextuuid(std::string &&pNextuuid) noexcept
 {
     nextuuid_ = std::make_shared<std::string>(std::move(pNextuuid));
-    dirtyFlag_[3] = true;
+    dirtyFlag_[2] = true;
 }
 
 const int32_t &Usergroup::getValueOfCount() const noexcept
@@ -382,12 +322,11 @@ const std::shared_ptr<int32_t> &Usergroup::getCount() const noexcept
 void Usergroup::setCount(const int32_t &pCount) noexcept
 {
     count_ = std::make_shared<int32_t>(pCount);
-    dirtyFlag_[4] = true;
+    dirtyFlag_[3] = true;
 }
 
 void Usergroup::updateId(const uint64_t id)
 {
-    id_ = std::make_shared<int32_t>(static_cast<int32_t>(id));
 }
 
 const std::vector<std::string> &Usergroup::insertColumns() noexcept
@@ -403,7 +342,7 @@ const std::vector<std::string> &Usergroup::insertColumns() noexcept
 
 void Usergroup::outputArgs(drogon::orm::internal::SqlBinder &binder) const
 {
-    if(dirtyFlag_[1])
+    if(dirtyFlag_[0])
     {
         if(getUuid())
         {
@@ -414,7 +353,7 @@ void Usergroup::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[2])
+    if(dirtyFlag_[1])
     {
         if(getIsDeleted())
         {
@@ -425,7 +364,7 @@ void Usergroup::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[3])
+    if(dirtyFlag_[2])
     {
         if(getNextuuid())
         {
@@ -436,7 +375,7 @@ void Usergroup::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[4])
+    if(dirtyFlag_[3])
     {
         if(getCount())
         {
@@ -452,6 +391,10 @@ void Usergroup::outputArgs(drogon::orm::internal::SqlBinder &binder) const
 const std::vector<std::string> Usergroup::updateColumns() const
 {
     std::vector<std::string> ret;
+    if(dirtyFlag_[0])
+    {
+        ret.push_back(getColumnName(0));
+    }
     if(dirtyFlag_[1])
     {
         ret.push_back(getColumnName(1));
@@ -464,16 +407,12 @@ const std::vector<std::string> Usergroup::updateColumns() const
     {
         ret.push_back(getColumnName(3));
     }
-    if(dirtyFlag_[4])
-    {
-        ret.push_back(getColumnName(4));
-    }
     return ret;
 }
 
 void Usergroup::updateArgs(drogon::orm::internal::SqlBinder &binder) const
 {
-    if(dirtyFlag_[1])
+    if(dirtyFlag_[0])
     {
         if(getUuid())
         {
@@ -484,7 +423,7 @@ void Usergroup::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[2])
+    if(dirtyFlag_[1])
     {
         if(getIsDeleted())
         {
@@ -495,7 +434,7 @@ void Usergroup::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[3])
+    if(dirtyFlag_[2])
     {
         if(getNextuuid())
         {
@@ -506,7 +445,7 @@ void Usergroup::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[4])
+    if(dirtyFlag_[3])
     {
         if(getCount())
         {
@@ -521,14 +460,6 @@ void Usergroup::updateArgs(drogon::orm::internal::SqlBinder &binder) const
 Json::Value Usergroup::toJson() const
 {
     Json::Value ret;
-    if(getId())
-    {
-        ret["id"]=getValueOfId();
-    }
-    else
-    {
-        ret["id"]=Json::Value();
-    }
     if(getUuid())
     {
         ret["uuid"]=getValueOfUuid();
@@ -568,13 +499,13 @@ Json::Value Usergroup::toMasqueradedJson(
     const std::vector<std::string> &pMasqueradingVector) const
 {
     Json::Value ret;
-    if(pMasqueradingVector.size() == 5)
+    if(pMasqueradingVector.size() == 4)
     {
         if(!pMasqueradingVector[0].empty())
         {
-            if(getId())
+            if(getUuid())
             {
-                ret[pMasqueradingVector[0]]=getValueOfId();
+                ret[pMasqueradingVector[0]]=getValueOfUuid();
             }
             else
             {
@@ -583,9 +514,9 @@ Json::Value Usergroup::toMasqueradedJson(
         }
         if(!pMasqueradingVector[1].empty())
         {
-            if(getUuid())
+            if(getIsDeleted())
             {
-                ret[pMasqueradingVector[1]]=getValueOfUuid();
+                ret[pMasqueradingVector[1]]=getValueOfIsDeleted();
             }
             else
             {
@@ -594,9 +525,9 @@ Json::Value Usergroup::toMasqueradedJson(
         }
         if(!pMasqueradingVector[2].empty())
         {
-            if(getIsDeleted())
+            if(getNextuuid())
             {
-                ret[pMasqueradingVector[2]]=getValueOfIsDeleted();
+                ret[pMasqueradingVector[2]]=getValueOfNextuuid();
             }
             else
             {
@@ -605,37 +536,18 @@ Json::Value Usergroup::toMasqueradedJson(
         }
         if(!pMasqueradingVector[3].empty())
         {
-            if(getNextuuid())
+            if(getCount())
             {
-                ret[pMasqueradingVector[3]]=getValueOfNextuuid();
+                ret[pMasqueradingVector[3]]=getValueOfCount();
             }
             else
             {
                 ret[pMasqueradingVector[3]]=Json::Value();
             }
         }
-        if(!pMasqueradingVector[4].empty())
-        {
-            if(getCount())
-            {
-                ret[pMasqueradingVector[4]]=getValueOfCount();
-            }
-            else
-            {
-                ret[pMasqueradingVector[4]]=Json::Value();
-            }
-        }
         return ret;
     }
     LOG_ERROR << "Masquerade failed";
-    if(getId())
-    {
-        ret["id"]=getValueOfId();
-    }
-    else
-    {
-        ret["id"]=Json::Value();
-    }
     if(getUuid())
     {
         ret["uuid"]=getValueOfUuid();
@@ -673,14 +585,9 @@ Json::Value Usergroup::toMasqueradedJson(
 
 bool Usergroup::validateJsonForCreation(const Json::Value &pJson, std::string &err)
 {
-    if(pJson.isMember("id"))
-    {
-        if(!validJsonOfField(0, "id", pJson["id"], err, true))
-            return false;
-    }
     if(pJson.isMember("uuid"))
     {
-        if(!validJsonOfField(1, "uuid", pJson["uuid"], err, true))
+        if(!validJsonOfField(0, "uuid", pJson["uuid"], err, true))
             return false;
     }
     else
@@ -690,17 +597,12 @@ bool Usergroup::validateJsonForCreation(const Json::Value &pJson, std::string &e
     }
     if(pJson.isMember("is_deleted"))
     {
-        if(!validJsonOfField(2, "is_deleted", pJson["is_deleted"], err, true))
+        if(!validJsonOfField(1, "is_deleted", pJson["is_deleted"], err, true))
             return false;
-    }
-    else
-    {
-        err="The is_deleted column cannot be null";
-        return false;
     }
     if(pJson.isMember("nextuuid"))
     {
-        if(!validJsonOfField(3, "nextuuid", pJson["nextuuid"], err, true))
+        if(!validJsonOfField(2, "nextuuid", pJson["nextuuid"], err, true))
             return false;
     }
     else
@@ -710,13 +612,8 @@ bool Usergroup::validateJsonForCreation(const Json::Value &pJson, std::string &e
     }
     if(pJson.isMember("count"))
     {
-        if(!validJsonOfField(4, "count", pJson["count"], err, true))
+        if(!validJsonOfField(3, "count", pJson["count"], err, true))
             return false;
-    }
-    else
-    {
-        err="The count column cannot be null";
-        return false;
     }
     return true;
 }
@@ -724,7 +621,7 @@ bool Usergroup::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                                                    const std::vector<std::string> &pMasqueradingVector,
                                                    std::string &err)
 {
-    if(pMasqueradingVector.size() != 5)
+    if(pMasqueradingVector.size() != 4)
     {
         err = "Bad masquerading vector";
         return false;
@@ -737,6 +634,11 @@ bool Usergroup::validateMasqueradedJsonForCreation(const Json::Value &pJson,
               if(!validJsonOfField(0, pMasqueradingVector[0], pJson[pMasqueradingVector[0]], err, true))
                   return false;
           }
+        else
+        {
+            err="The " + pMasqueradingVector[0] + " column cannot be null";
+            return false;
+        }
       }
       if(!pMasqueradingVector[1].empty())
       {
@@ -745,11 +647,6 @@ bool Usergroup::validateMasqueradedJsonForCreation(const Json::Value &pJson,
               if(!validJsonOfField(1, pMasqueradingVector[1], pJson[pMasqueradingVector[1]], err, true))
                   return false;
           }
-        else
-        {
-            err="The " + pMasqueradingVector[1] + " column cannot be null";
-            return false;
-        }
       }
       if(!pMasqueradingVector[2].empty())
       {
@@ -771,24 +668,6 @@ bool Usergroup::validateMasqueradedJsonForCreation(const Json::Value &pJson,
               if(!validJsonOfField(3, pMasqueradingVector[3], pJson[pMasqueradingVector[3]], err, true))
                   return false;
           }
-        else
-        {
-            err="The " + pMasqueradingVector[3] + " column cannot be null";
-            return false;
-        }
-      }
-      if(!pMasqueradingVector[4].empty())
-      {
-          if(pJson.isMember(pMasqueradingVector[4]))
-          {
-              if(!validJsonOfField(4, pMasqueradingVector[4], pJson[pMasqueradingVector[4]], err, true))
-                  return false;
-          }
-        else
-        {
-            err="The " + pMasqueradingVector[4] + " column cannot be null";
-            return false;
-        }
       }
     }
     catch(const Json::LogicError &e)
@@ -800,9 +679,9 @@ bool Usergroup::validateMasqueradedJsonForCreation(const Json::Value &pJson,
 }
 bool Usergroup::validateJsonForUpdate(const Json::Value &pJson, std::string &err)
 {
-    if(pJson.isMember("id"))
+    if(pJson.isMember("uuid"))
     {
-        if(!validJsonOfField(0, "id", pJson["id"], err, false))
+        if(!validJsonOfField(0, "uuid", pJson["uuid"], err, false))
             return false;
     }
     else
@@ -810,24 +689,19 @@ bool Usergroup::validateJsonForUpdate(const Json::Value &pJson, std::string &err
         err = "The value of primary key must be set in the json object for update";
         return false;
     }
-    if(pJson.isMember("uuid"))
-    {
-        if(!validJsonOfField(1, "uuid", pJson["uuid"], err, false))
-            return false;
-    }
     if(pJson.isMember("is_deleted"))
     {
-        if(!validJsonOfField(2, "is_deleted", pJson["is_deleted"], err, false))
+        if(!validJsonOfField(1, "is_deleted", pJson["is_deleted"], err, false))
             return false;
     }
     if(pJson.isMember("nextuuid"))
     {
-        if(!validJsonOfField(3, "nextuuid", pJson["nextuuid"], err, false))
+        if(!validJsonOfField(2, "nextuuid", pJson["nextuuid"], err, false))
             return false;
     }
     if(pJson.isMember("count"))
     {
-        if(!validJsonOfField(4, "count", pJson["count"], err, false))
+        if(!validJsonOfField(3, "count", pJson["count"], err, false))
             return false;
     }
     return true;
@@ -836,7 +710,7 @@ bool Usergroup::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
                                                  const std::vector<std::string> &pMasqueradingVector,
                                                  std::string &err)
 {
-    if(pMasqueradingVector.size() != 5)
+    if(pMasqueradingVector.size() != 4)
     {
         err = "Bad masquerading vector";
         return false;
@@ -867,11 +741,6 @@ bool Usergroup::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
           if(!validJsonOfField(3, pMasqueradingVector[3], pJson[pMasqueradingVector[3]], err, false))
               return false;
       }
-      if(!pMasqueradingVector[4].empty() && pJson.isMember(pMasqueradingVector[4]))
-      {
-          if(!validJsonOfField(4, pMasqueradingVector[4], pJson[pMasqueradingVector[4]], err, false))
-              return false;
-      }
     }
     catch(const Json::LogicError &e)
     {
@@ -894,16 +763,20 @@ bool Usergroup::validJsonOfField(size_t index,
                 err="The " + fieldName + " column cannot be null";
                 return false;
             }
-            if(isForCreation)
-            {
-                err="The automatic primary key cannot be set";
-                return false;
-            }
-            if(!pJson.isInt())
+            if(!pJson.isString())
             {
                 err="Type error in the "+fieldName+" field";
                 return false;
             }
+            // asString().length() creates a string object, is there any better way to validate the length?
+            if(pJson.isString() && pJson.asString().length() > 100)
+            {
+                err="String length exceeds limit for the " +
+                    fieldName +
+                    " field (the maximum value is 100)";
+                return false;
+            }
+
             break;
         case 1:
             if(pJson.isNull())
@@ -911,20 +784,11 @@ bool Usergroup::validJsonOfField(size_t index,
                 err="The " + fieldName + " column cannot be null";
                 return false;
             }
-            if(!pJson.isString())
+            if(!pJson.isInt())
             {
                 err="Type error in the "+fieldName+" field";
                 return false;
             }
-            // asString().length() creates a string object, is there any better way to validate the length?
-            if(pJson.isString() && pJson.asString().length() > 100)
-            {
-                err="String length exceeds limit for the " +
-                    fieldName +
-                    " field (the maximum value is 100)";
-                return false;
-            }
-
             break;
         case 2:
             if(pJson.isNull())
@@ -932,18 +796,6 @@ bool Usergroup::validJsonOfField(size_t index,
                 err="The " + fieldName + " column cannot be null";
                 return false;
             }
-            if(!pJson.isInt())
-            {
-                err="Type error in the "+fieldName+" field";
-                return false;
-            }
-            break;
-        case 3:
-            if(pJson.isNull())
-            {
-                err="The " + fieldName + " column cannot be null";
-                return false;
-            }
             if(!pJson.isString())
             {
                 err="Type error in the "+fieldName+" field";
@@ -959,7 +811,7 @@ bool Usergroup::validJsonOfField(size_t index,
             }
 
             break;
-        case 4:
+        case 3:
             if(pJson.isNull())
             {
                 err="The " + fieldName + " column cannot be null";

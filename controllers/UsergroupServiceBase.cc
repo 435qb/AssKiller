@@ -423,7 +423,6 @@ void UsergroupServiceBase::update(const HttpRequestPtr &req,
 
 UsergroupServiceBase::UsergroupServiceBase()
     : RestfulController({
-          "id",
           "uuid",
           "is_deleted",
           "nextuuid",
@@ -436,7 +435,6 @@ UsergroupServiceBase::UsergroupServiceBase()
     * to clients.
     */
     enableMasquerading({
-        "id", // the alias for the id column.
         "uuid", // the alias for the uuid column.
         "is_deleted", // the alias for the is_deleted column.
         "nextuuid", // the alias for the nextuuid column.

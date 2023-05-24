@@ -22,15 +22,6 @@ using namespace drogon_model::test;
 class UsergroupUserServiceBase : public RestfulController
 {
   public:
-    void getOne(const HttpRequestPtr &req,
-                std::function<void(const HttpResponsePtr &)> &&callback,
-                UsergroupUser::PrimaryKeyType &&id);
-    void updateOne(const HttpRequestPtr &req,
-                   std::function<void(const HttpResponsePtr &)> &&callback,
-                   UsergroupUser::PrimaryKeyType &&id);
-    void deleteOne(const HttpRequestPtr &req,
-                   std::function<void(const HttpResponsePtr &)> &&callback,
-                   UsergroupUser::PrimaryKeyType &&id);
     void get(const HttpRequestPtr &req,
              std::function<void(const HttpResponsePtr &)> &&callback);
     void create(const HttpRequestPtr &req,

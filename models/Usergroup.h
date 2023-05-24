@@ -46,7 +46,6 @@ class Usergroup
   public:
     struct Cols
     {
-        static const std::string _id;
         static const std::string _uuid;
         static const std::string _is_deleted;
         static const std::string _nextuuid;
@@ -57,7 +56,7 @@ class Usergroup
     const static std::string tableName;
     const static bool hasPrimaryKey;
     const static std::string primaryKeyName;
-    using PrimaryKeyType = int32_t;
+    using PrimaryKeyType = std::string;
     const PrimaryKeyType &getPrimaryKey() const;
 
     /**
@@ -102,14 +101,6 @@ class Usergroup
                           std::string &err,
                           bool isForCreation);
 
-    /**  For column id  */
-    ///Get the value of the column id, returns the default value if the column is null
-    const int32_t &getValueOfId() const noexcept;
-    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<int32_t> &getId() const noexcept;
-    ///Set the value of the column id
-    void setId(const int32_t &pId) noexcept;
-
     /**  For column uuid  */
     ///Get the value of the column uuid, returns the default value if the column is null
     const std::string &getValueOfUuid() const noexcept;
@@ -145,7 +136,7 @@ class Usergroup
     void setCount(const int32_t &pCount) noexcept;
 
 
-    static size_t getColumnNumber() noexcept {  return 5;  }
+    static size_t getColumnNumber() noexcept {  return 4;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -174,7 +165,6 @@ class Usergroup
     void updateArgs(drogon::orm::internal::SqlBinder &binder) const;
     ///For mysql or sqlite3
     void updateId(const uint64_t id);
-    std::shared_ptr<int32_t> id_;
     std::shared_ptr<std::string> uuid_;
     std::shared_ptr<int8_t> isDeleted_;
     std::shared_ptr<std::string> nextuuid_;
@@ -190,17 +180,17 @@ class Usergroup
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[5]={ false };
+    bool dirtyFlag_[4]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
-        static const std::string sql="select * from " + tableName + " where id = ?";
+        static const std::string sql="select * from " + tableName + " where uuid = ?";
         return sql;
     }
 
     static const std::string &sqlForDeletingByPrimaryKey()
     {
-        static const std::string sql="delete from " + tableName + " where id = ?";
+        static const std::string sql="delete from " + tableName + " where uuid = ?";
         return sql;
     }
     std::string sqlForInserting(bool &needSelection) const
@@ -208,29 +198,28 @@ class Usergroup
         std::string sql="insert into " + tableName + " (";
         size_t parametersCount = 0;
         needSelection = false;
-            sql += "id,";
-            ++parametersCount;
-        if(dirtyFlag_[1])
+        if(dirtyFlag_[0])
         {
             sql += "uuid,";
             ++parametersCount;
         }
-        if(dirtyFlag_[2])
+        sql += "is_deleted,";
+        ++parametersCount;
+        if(!dirtyFlag_[1])
         {
-            sql += "is_deleted,";
-            ++parametersCount;
+            needSelection=true;
         }
-        if(dirtyFlag_[3])
+        if(dirtyFlag_[2])
         {
             sql += "nextuuid,";
             ++parametersCount;
         }
-        if(dirtyFlag_[4])
+        sql += "count,";
+        ++parametersCount;
+        if(!dirtyFlag_[3])
         {
-            sql += "count,";
-            ++parametersCount;
+            needSelection=true;
         }
-        needSelection=true;
         if(parametersCount > 0)
         {
             sql[sql.length()-1]=')';
@@ -239,11 +228,19 @@ class Usergroup
         else
             sql += ") values (";
 
-        sql +="default,";
+        if(dirtyFlag_[0])
+        {
+            sql.append("?,");
+
+        }
         if(dirtyFlag_[1])
         {
             sql.append("?,");
 
+        }
+        else
+        {
+            sql +="default,";
         }
         if(dirtyFlag_[2])
         {
@@ -255,10 +252,9 @@ class Usergroup
             sql.append("?,");
 
         }
-        if(dirtyFlag_[4])
+        else
         {
-            sql.append("?,");
-
+            sql +="default,";
         }
         if(parametersCount > 0)
         {

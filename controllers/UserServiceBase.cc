@@ -423,7 +423,6 @@ void UserServiceBase::update(const HttpRequestPtr &req,
 
 UserServiceBase::UserServiceBase()
     : RestfulController({
-          "id",
           "account",
           "password",
           "uuid"
@@ -435,7 +434,6 @@ UserServiceBase::UserServiceBase()
     * to clients.
     */
     enableMasquerading({
-        "id", // the alias for the id column.
         "account", // the alias for the account column.
         "password", // the alias for the password column.
         "uuid"  // the alias for the uuid column.

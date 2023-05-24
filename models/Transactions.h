@@ -45,7 +45,6 @@ class Transactions
   public:
     struct Cols
     {
-        static const std::string _id;
         static const std::string _txuuid;
         static const std::string _time;
         static const std::string _useruuid;
@@ -57,7 +56,7 @@ class Transactions
     const static std::string tableName;
     const static bool hasPrimaryKey;
     const static std::string primaryKeyName;
-    using PrimaryKeyType = int32_t;
+    using PrimaryKeyType = std::string;
     const PrimaryKeyType &getPrimaryKey() const;
 
     /**
@@ -101,14 +100,6 @@ class Transactions
                           const Json::Value &pJson,
                           std::string &err,
                           bool isForCreation);
-
-    /**  For column id  */
-    ///Get the value of the column id, returns the default value if the column is null
-    const int32_t &getValueOfId() const noexcept;
-    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<int32_t> &getId() const noexcept;
-    ///Set the value of the column id
-    void setId(const int32_t &pId) noexcept;
 
     /**  For column txuuid  */
     ///Get the value of the column txuuid, returns the default value if the column is null
@@ -154,7 +145,7 @@ class Transactions
     void setCount(const int32_t &pCount) noexcept;
 
 
-    static size_t getColumnNumber() noexcept {  return 6;  }
+    static size_t getColumnNumber() noexcept {  return 5;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -183,7 +174,6 @@ class Transactions
     void updateArgs(drogon::orm::internal::SqlBinder &binder) const;
     ///For mysql or sqlite3
     void updateId(const uint64_t id);
-    std::shared_ptr<int32_t> id_;
     std::shared_ptr<std::string> txuuid_;
     std::shared_ptr<::trantor::Date> time_;
     std::shared_ptr<std::string> useruuid_;
@@ -200,17 +190,17 @@ class Transactions
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[6]={ false };
+    bool dirtyFlag_[5]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
-        static const std::string sql="select * from " + tableName + " where id = ?";
+        static const std::string sql="select * from " + tableName + " where txuuid = ?";
         return sql;
     }
 
     static const std::string &sqlForDeletingByPrimaryKey()
     {
-        static const std::string sql="delete from " + tableName + " where id = ?";
+        static const std::string sql="delete from " + tableName + " where txuuid = ?";
         return sql;
     }
     std::string sqlForInserting(bool &needSelection) const
@@ -218,34 +208,31 @@ class Transactions
         std::string sql="insert into " + tableName + " (";
         size_t parametersCount = 0;
         needSelection = false;
-            sql += "id,";
-            ++parametersCount;
-        if(dirtyFlag_[1])
+        if(dirtyFlag_[0])
         {
             sql += "txuuid,";
             ++parametersCount;
         }
-        if(dirtyFlag_[2])
+        if(dirtyFlag_[1])
         {
             sql += "time,";
             ++parametersCount;
         }
-        if(dirtyFlag_[3])
+        if(dirtyFlag_[2])
         {
             sql += "useruuid,";
             ++parametersCount;
         }
-        if(dirtyFlag_[4])
+        if(dirtyFlag_[3])
         {
             sql += "guuid,";
             ++parametersCount;
         }
-        if(dirtyFlag_[5])
+        if(dirtyFlag_[4])
         {
             sql += "count,";
             ++parametersCount;
         }
-        needSelection=true;
         if(parametersCount > 0)
         {
             sql[sql.length()-1]=')';
@@ -254,7 +241,11 @@ class Transactions
         else
             sql += ") values (";
 
-        sql +="default,";
+        if(dirtyFlag_[0])
+        {
+            sql.append("?,");
+
+        }
         if(dirtyFlag_[1])
         {
             sql.append("?,");
@@ -271,11 +262,6 @@ class Transactions
 
         }
         if(dirtyFlag_[4])
-        {
-            sql.append("?,");
-
-        }
-        if(dirtyFlag_[5])
         {
             sql.append("?,");
 

@@ -13,17 +13,15 @@ using namespace drogon;
 using namespace drogon::orm;
 using namespace drogon_model::test;
 
-const std::string Confirm::Cols::_id = "id";
 const std::string Confirm::Cols::_useruuid = "useruuid";
 const std::string Confirm::Cols::_txuuid = "txuuid";
-const std::string Confirm::primaryKeyName = "id";
+const std::vector<std::string> Confirm::primaryKeyName = {"useruuid","txuuid"};
 const bool Confirm::hasPrimaryKey = true;
 const std::string Confirm::tableName = "confirm";
 
 const std::vector<typename Confirm::MetaData> Confirm::metaData_={
-{"id","int32_t","int(11)",4,1,1,1},
-{"useruuid","std::string","varchar(100)",100,0,0,1},
-{"txuuid","std::string","varchar(100)",100,0,0,1}
+{"useruuid","std::string","varchar(100)",100,0,1,1},
+{"txuuid","std::string","varchar(100)",100,0,1,1}
 };
 const std::string &Confirm::getColumnName(size_t index) noexcept(false)
 {
@@ -34,10 +32,6 @@ Confirm::Confirm(const Row &r, const ssize_t indexOffset) noexcept
 {
     if(indexOffset < 0)
     {
-        if(!r["id"].isNull())
-        {
-            id_=std::make_shared<int32_t>(r["id"].as<int32_t>());
-        }
         if(!r["useruuid"].isNull())
         {
             useruuid_=std::make_shared<std::string>(r["useruuid"].as<std::string>());
@@ -50,7 +44,7 @@ Confirm::Confirm(const Row &r, const ssize_t indexOffset) noexcept
     else
     {
         size_t offset = (size_t)indexOffset;
-        if(offset + 3 > r.size())
+        if(offset + 2 > r.size())
         {
             LOG_FATAL << "Invalid SQL result for this model";
             return;
@@ -59,14 +53,9 @@ Confirm::Confirm(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 0;
         if(!r[index].isNull())
         {
-            id_=std::make_shared<int32_t>(r[index].as<int32_t>());
-        }
-        index = offset + 1;
-        if(!r[index].isNull())
-        {
             useruuid_=std::make_shared<std::string>(r[index].as<std::string>());
         }
-        index = offset + 2;
+        index = offset + 1;
         if(!r[index].isNull())
         {
             txuuid_=std::make_shared<std::string>(r[index].as<std::string>());
@@ -77,7 +66,7 @@ Confirm::Confirm(const Row &r, const ssize_t indexOffset) noexcept
 
 Confirm::Confirm(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 3)
+    if(pMasqueradingVector.size() != 2)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -87,7 +76,7 @@ Confirm::Confirm(const Json::Value &pJson, const std::vector<std::string> &pMasq
         dirtyFlag_[0] = true;
         if(!pJson[pMasqueradingVector[0]].isNull())
         {
-            id_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[0]].asInt64());
+            useruuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[0]].asString());
         }
     }
     if(!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1]))
@@ -95,32 +84,16 @@ Confirm::Confirm(const Json::Value &pJson, const std::vector<std::string> &pMasq
         dirtyFlag_[1] = true;
         if(!pJson[pMasqueradingVector[1]].isNull())
         {
-            useruuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
-        }
-    }
-    if(!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2]))
-    {
-        dirtyFlag_[2] = true;
-        if(!pJson[pMasqueradingVector[2]].isNull())
-        {
-            txuuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
+            txuuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
         }
     }
 }
 
 Confirm::Confirm(const Json::Value &pJson) noexcept(false)
 {
-    if(pJson.isMember("id"))
-    {
-        dirtyFlag_[0]=true;
-        if(!pJson["id"].isNull())
-        {
-            id_=std::make_shared<int32_t>((int32_t)pJson["id"].asInt64());
-        }
-    }
     if(pJson.isMember("useruuid"))
     {
-        dirtyFlag_[1]=true;
+        dirtyFlag_[0]=true;
         if(!pJson["useruuid"].isNull())
         {
             useruuid_=std::make_shared<std::string>(pJson["useruuid"].asString());
@@ -128,7 +101,7 @@ Confirm::Confirm(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("txuuid"))
     {
-        dirtyFlag_[2]=true;
+        dirtyFlag_[1]=true;
         if(!pJson["txuuid"].isNull())
         {
             txuuid_=std::make_shared<std::string>(pJson["txuuid"].asString());
@@ -139,7 +112,7 @@ Confirm::Confirm(const Json::Value &pJson) noexcept(false)
 void Confirm::updateByMasqueradedJson(const Json::Value &pJson,
                                             const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 3)
+    if(pMasqueradingVector.size() != 2)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -148,39 +121,22 @@ void Confirm::updateByMasqueradedJson(const Json::Value &pJson,
     {
         if(!pJson[pMasqueradingVector[0]].isNull())
         {
-            id_=std::make_shared<int32_t>((int32_t)pJson[pMasqueradingVector[0]].asInt64());
+            useruuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[0]].asString());
         }
     }
     if(!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1]))
     {
-        dirtyFlag_[1] = true;
         if(!pJson[pMasqueradingVector[1]].isNull())
         {
-            useruuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
-        }
-    }
-    if(!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2]))
-    {
-        dirtyFlag_[2] = true;
-        if(!pJson[pMasqueradingVector[2]].isNull())
-        {
-            txuuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[2]].asString());
+            txuuid_=std::make_shared<std::string>(pJson[pMasqueradingVector[1]].asString());
         }
     }
 }
 
 void Confirm::updateByJson(const Json::Value &pJson) noexcept(false)
 {
-    if(pJson.isMember("id"))
-    {
-        if(!pJson["id"].isNull())
-        {
-            id_=std::make_shared<int32_t>((int32_t)pJson["id"].asInt64());
-        }
-    }
     if(pJson.isMember("useruuid"))
     {
-        dirtyFlag_[1] = true;
         if(!pJson["useruuid"].isNull())
         {
             useruuid_=std::make_shared<std::string>(pJson["useruuid"].asString());
@@ -188,34 +144,11 @@ void Confirm::updateByJson(const Json::Value &pJson) noexcept(false)
     }
     if(pJson.isMember("txuuid"))
     {
-        dirtyFlag_[2] = true;
         if(!pJson["txuuid"].isNull())
         {
             txuuid_=std::make_shared<std::string>(pJson["txuuid"].asString());
         }
     }
-}
-
-const int32_t &Confirm::getValueOfId() const noexcept
-{
-    const static int32_t defaultValue = int32_t();
-    if(id_)
-        return *id_;
-    return defaultValue;
-}
-const std::shared_ptr<int32_t> &Confirm::getId() const noexcept
-{
-    return id_;
-}
-void Confirm::setId(const int32_t &pId) noexcept
-{
-    id_ = std::make_shared<int32_t>(pId);
-    dirtyFlag_[0] = true;
-}
-const typename Confirm::PrimaryKeyType & Confirm::getPrimaryKey() const
-{
-    assert(id_);
-    return *id_;
 }
 
 const std::string &Confirm::getValueOfUseruuid() const noexcept
@@ -232,12 +165,12 @@ const std::shared_ptr<std::string> &Confirm::getUseruuid() const noexcept
 void Confirm::setUseruuid(const std::string &pUseruuid) noexcept
 {
     useruuid_ = std::make_shared<std::string>(pUseruuid);
-    dirtyFlag_[1] = true;
+    dirtyFlag_[0] = true;
 }
 void Confirm::setUseruuid(std::string &&pUseruuid) noexcept
 {
     useruuid_ = std::make_shared<std::string>(std::move(pUseruuid));
-    dirtyFlag_[1] = true;
+    dirtyFlag_[0] = true;
 }
 
 const std::string &Confirm::getValueOfTxuuid() const noexcept
@@ -254,17 +187,20 @@ const std::shared_ptr<std::string> &Confirm::getTxuuid() const noexcept
 void Confirm::setTxuuid(const std::string &pTxuuid) noexcept
 {
     txuuid_ = std::make_shared<std::string>(pTxuuid);
-    dirtyFlag_[2] = true;
+    dirtyFlag_[1] = true;
 }
 void Confirm::setTxuuid(std::string &&pTxuuid) noexcept
 {
     txuuid_ = std::make_shared<std::string>(std::move(pTxuuid));
-    dirtyFlag_[2] = true;
+    dirtyFlag_[1] = true;
 }
 
 void Confirm::updateId(const uint64_t id)
 {
-    id_ = std::make_shared<int32_t>(static_cast<int32_t>(id));
+}
+typename Confirm::PrimaryKeyType Confirm::getPrimaryKey() const
+{
+    return std::make_tuple(*useruuid_,*txuuid_);
 }
 
 const std::vector<std::string> &Confirm::insertColumns() noexcept
@@ -278,7 +214,7 @@ const std::vector<std::string> &Confirm::insertColumns() noexcept
 
 void Confirm::outputArgs(drogon::orm::internal::SqlBinder &binder) const
 {
-    if(dirtyFlag_[1])
+    if(dirtyFlag_[0])
     {
         if(getUseruuid())
         {
@@ -289,7 +225,7 @@ void Confirm::outputArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[2])
+    if(dirtyFlag_[1])
     {
         if(getTxuuid())
         {
@@ -305,20 +241,20 @@ void Confirm::outputArgs(drogon::orm::internal::SqlBinder &binder) const
 const std::vector<std::string> Confirm::updateColumns() const
 {
     std::vector<std::string> ret;
+    if(dirtyFlag_[0])
+    {
+        ret.push_back(getColumnName(0));
+    }
     if(dirtyFlag_[1])
     {
         ret.push_back(getColumnName(1));
-    }
-    if(dirtyFlag_[2])
-    {
-        ret.push_back(getColumnName(2));
     }
     return ret;
 }
 
 void Confirm::updateArgs(drogon::orm::internal::SqlBinder &binder) const
 {
-    if(dirtyFlag_[1])
+    if(dirtyFlag_[0])
     {
         if(getUseruuid())
         {
@@ -329,7 +265,7 @@ void Confirm::updateArgs(drogon::orm::internal::SqlBinder &binder) const
             binder << nullptr;
         }
     }
-    if(dirtyFlag_[2])
+    if(dirtyFlag_[1])
     {
         if(getTxuuid())
         {
@@ -344,14 +280,6 @@ void Confirm::updateArgs(drogon::orm::internal::SqlBinder &binder) const
 Json::Value Confirm::toJson() const
 {
     Json::Value ret;
-    if(getId())
-    {
-        ret["id"]=getValueOfId();
-    }
-    else
-    {
-        ret["id"]=Json::Value();
-    }
     if(getUseruuid())
     {
         ret["useruuid"]=getValueOfUseruuid();
@@ -375,13 +303,13 @@ Json::Value Confirm::toMasqueradedJson(
     const std::vector<std::string> &pMasqueradingVector) const
 {
     Json::Value ret;
-    if(pMasqueradingVector.size() == 3)
+    if(pMasqueradingVector.size() == 2)
     {
         if(!pMasqueradingVector[0].empty())
         {
-            if(getId())
+            if(getUseruuid())
             {
-                ret[pMasqueradingVector[0]]=getValueOfId();
+                ret[pMasqueradingVector[0]]=getValueOfUseruuid();
             }
             else
             {
@@ -390,37 +318,18 @@ Json::Value Confirm::toMasqueradedJson(
         }
         if(!pMasqueradingVector[1].empty())
         {
-            if(getUseruuid())
+            if(getTxuuid())
             {
-                ret[pMasqueradingVector[1]]=getValueOfUseruuid();
+                ret[pMasqueradingVector[1]]=getValueOfTxuuid();
             }
             else
             {
                 ret[pMasqueradingVector[1]]=Json::Value();
             }
         }
-        if(!pMasqueradingVector[2].empty())
-        {
-            if(getTxuuid())
-            {
-                ret[pMasqueradingVector[2]]=getValueOfTxuuid();
-            }
-            else
-            {
-                ret[pMasqueradingVector[2]]=Json::Value();
-            }
-        }
         return ret;
     }
     LOG_ERROR << "Masquerade failed";
-    if(getId())
-    {
-        ret["id"]=getValueOfId();
-    }
-    else
-    {
-        ret["id"]=Json::Value();
-    }
     if(getUseruuid())
     {
         ret["useruuid"]=getValueOfUseruuid();
@@ -442,14 +351,9 @@ Json::Value Confirm::toMasqueradedJson(
 
 bool Confirm::validateJsonForCreation(const Json::Value &pJson, std::string &err)
 {
-    if(pJson.isMember("id"))
-    {
-        if(!validJsonOfField(0, "id", pJson["id"], err, true))
-            return false;
-    }
     if(pJson.isMember("useruuid"))
     {
-        if(!validJsonOfField(1, "useruuid", pJson["useruuid"], err, true))
+        if(!validJsonOfField(0, "useruuid", pJson["useruuid"], err, true))
             return false;
     }
     else
@@ -459,7 +363,7 @@ bool Confirm::validateJsonForCreation(const Json::Value &pJson, std::string &err
     }
     if(pJson.isMember("txuuid"))
     {
-        if(!validJsonOfField(2, "txuuid", pJson["txuuid"], err, true))
+        if(!validJsonOfField(1, "txuuid", pJson["txuuid"], err, true))
             return false;
     }
     else
@@ -473,7 +377,7 @@ bool Confirm::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                                                  const std::vector<std::string> &pMasqueradingVector,
                                                  std::string &err)
 {
-    if(pMasqueradingVector.size() != 3)
+    if(pMasqueradingVector.size() != 2)
     {
         err = "Bad masquerading vector";
         return false;
@@ -486,6 +390,11 @@ bool Confirm::validateMasqueradedJsonForCreation(const Json::Value &pJson,
               if(!validJsonOfField(0, pMasqueradingVector[0], pJson[pMasqueradingVector[0]], err, true))
                   return false;
           }
+        else
+        {
+            err="The " + pMasqueradingVector[0] + " column cannot be null";
+            return false;
+        }
       }
       if(!pMasqueradingVector[1].empty())
       {
@@ -500,19 +409,6 @@ bool Confirm::validateMasqueradedJsonForCreation(const Json::Value &pJson,
             return false;
         }
       }
-      if(!pMasqueradingVector[2].empty())
-      {
-          if(pJson.isMember(pMasqueradingVector[2]))
-          {
-              if(!validJsonOfField(2, pMasqueradingVector[2], pJson[pMasqueradingVector[2]], err, true))
-                  return false;
-          }
-        else
-        {
-            err="The " + pMasqueradingVector[2] + " column cannot be null";
-            return false;
-        }
-      }
     }
     catch(const Json::LogicError &e)
     {
@@ -523,9 +419,9 @@ bool Confirm::validateMasqueradedJsonForCreation(const Json::Value &pJson,
 }
 bool Confirm::validateJsonForUpdate(const Json::Value &pJson, std::string &err)
 {
-    if(pJson.isMember("id"))
+    if(pJson.isMember("useruuid"))
     {
-        if(!validJsonOfField(0, "id", pJson["id"], err, false))
+        if(!validJsonOfField(0, "useruuid", pJson["useruuid"], err, false))
             return false;
     }
     else
@@ -533,15 +429,15 @@ bool Confirm::validateJsonForUpdate(const Json::Value &pJson, std::string &err)
         err = "The value of primary key must be set in the json object for update";
         return false;
     }
-    if(pJson.isMember("useruuid"))
-    {
-        if(!validJsonOfField(1, "useruuid", pJson["useruuid"], err, false))
-            return false;
-    }
     if(pJson.isMember("txuuid"))
     {
-        if(!validJsonOfField(2, "txuuid", pJson["txuuid"], err, false))
+        if(!validJsonOfField(1, "txuuid", pJson["txuuid"], err, false))
             return false;
+    }
+    else
+    {
+        err = "The value of primary key must be set in the json object for update";
+        return false;
     }
     return true;
 }
@@ -549,7 +445,7 @@ bool Confirm::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
                                                const std::vector<std::string> &pMasqueradingVector,
                                                std::string &err)
 {
-    if(pMasqueradingVector.size() != 3)
+    if(pMasqueradingVector.size() != 2)
     {
         err = "Bad masquerading vector";
         return false;
@@ -570,11 +466,11 @@ bool Confirm::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
           if(!validJsonOfField(1, pMasqueradingVector[1], pJson[pMasqueradingVector[1]], err, false))
               return false;
       }
-      if(!pMasqueradingVector[2].empty() && pJson.isMember(pMasqueradingVector[2]))
-      {
-          if(!validJsonOfField(2, pMasqueradingVector[2], pJson[pMasqueradingVector[2]], err, false))
-              return false;
-      }
+    else
+    {
+        err = "The value of primary key must be set in the json object for update";
+        return false;
+    }
     }
     catch(const Json::LogicError &e)
     {
@@ -597,23 +493,6 @@ bool Confirm::validJsonOfField(size_t index,
                 err="The " + fieldName + " column cannot be null";
                 return false;
             }
-            if(isForCreation)
-            {
-                err="The automatic primary key cannot be set";
-                return false;
-            }
-            if(!pJson.isInt())
-            {
-                err="Type error in the "+fieldName+" field";
-                return false;
-            }
-            break;
-        case 1:
-            if(pJson.isNull())
-            {
-                err="The " + fieldName + " column cannot be null";
-                return false;
-            }
             if(!pJson.isString())
             {
                 err="Type error in the "+fieldName+" field";
@@ -629,7 +508,7 @@ bool Confirm::validJsonOfField(size_t index,
             }
 
             break;
-        case 2:
+        case 1:
             if(pJson.isNull())
             {
                 err="The " + fieldName + " column cannot be null";
