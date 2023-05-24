@@ -856,11 +856,6 @@ bool Transactions::validateJsonForCreation(const Json::Value &pJson, std::string
         if(!validJsonOfField(4, "count", pJson["count"], err, true))
             return false;
     }
-    else
-    {
-        err="The count column cannot be null";
-        return false;
-    }
     return true;
 }
 bool Transactions::validateMasqueradedJsonForCreation(const Json::Value &pJson,
@@ -932,11 +927,6 @@ bool Transactions::validateMasqueradedJsonForCreation(const Json::Value &pJson,
               if(!validJsonOfField(4, pMasqueradingVector[4], pJson[pMasqueradingVector[4]], err, true))
                   return false;
           }
-        else
-        {
-            err="The " + pMasqueradingVector[4] + " column cannot be null";
-            return false;
-        }
       }
     }
     catch(const Json::LogicError &e)

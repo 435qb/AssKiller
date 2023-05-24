@@ -228,10 +228,11 @@ class Transactions
             sql += "guuid,";
             ++parametersCount;
         }
-        if(dirtyFlag_[4])
+        sql += "count,";
+        ++parametersCount;
+        if(!dirtyFlag_[4])
         {
-            sql += "count,";
-            ++parametersCount;
+            needSelection=true;
         }
         if(parametersCount > 0)
         {
@@ -265,6 +266,10 @@ class Transactions
         {
             sql.append("?,");
 
+        }
+        else
+        {
+            sql +="default,";
         }
         if(parametersCount > 0)
         {

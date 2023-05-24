@@ -45,7 +45,7 @@ class UsergroupUser
     {
         static const std::string _guuid;
         static const std::string _useruuid;
-        static const std::string _index;
+        static const std::string _num;
     };
 
     const static int primaryKeyNumber;
@@ -115,13 +115,13 @@ class UsergroupUser
     void setUseruuid(const std::string &pUseruuid) noexcept;
     void setUseruuid(std::string &&pUseruuid) noexcept;
 
-    /**  For column index  */
-    ///Get the value of the column index, returns the default value if the column is null
-    const int16_t &getValueOfIndex() const noexcept;
+    /**  For column num  */
+    ///Get the value of the column num, returns the default value if the column is null
+    const int16_t &getValueOfNum() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<int16_t> &getIndex() const noexcept;
-    ///Set the value of the column index
-    void setIndex(const int16_t &pIndex) noexcept;
+    const std::shared_ptr<int16_t> &getNum() const noexcept;
+    ///Set the value of the column num
+    void setNum(const int16_t &pNum) noexcept;
 
 
     static size_t getColumnNumber() noexcept {  return 3;  }
@@ -147,7 +147,7 @@ class UsergroupUser
     void updateId(const uint64_t id);
     std::shared_ptr<std::string> guuid_;
     std::shared_ptr<std::string> useruuid_;
-    std::shared_ptr<int16_t> index_;
+    std::shared_ptr<int16_t> num_;
     struct MetaData
     {
         const std::string colName_;
@@ -189,7 +189,7 @@ class UsergroupUser
         }
         if(dirtyFlag_[2])
         {
-            sql += "index,";
+            sql += "num,";
             ++parametersCount;
         }
         if(parametersCount > 0)

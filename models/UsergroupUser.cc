@@ -15,7 +15,7 @@ using namespace drogon_model::test;
 
 const std::string UsergroupUser::Cols::_guuid = "guuid";
 const std::string UsergroupUser::Cols::_useruuid = "useruuid";
-const std::string UsergroupUser::Cols::_index = "index";
+const std::string UsergroupUser::Cols::_num = "num";
 const std::string UsergroupUser::primaryKeyName = "";
 const bool UsergroupUser::hasPrimaryKey = false;
 const std::string UsergroupUser::tableName = "usergroup_user";
@@ -23,7 +23,7 @@ const std::string UsergroupUser::tableName = "usergroup_user";
 const std::vector<typename UsergroupUser::MetaData> UsergroupUser::metaData_={
 {"guuid","std::string","varchar(100)",100,0,0,1},
 {"useruuid","std::string","varchar(100)",100,0,0,1},
-{"index","int16_t","smallint(6)",2,0,0,1}
+{"num","int16_t","smallint(6)",2,0,0,1}
 };
 const std::string &UsergroupUser::getColumnName(size_t index) noexcept(false)
 {
@@ -42,9 +42,9 @@ UsergroupUser::UsergroupUser(const Row &r, const ssize_t indexOffset) noexcept
         {
             useruuid_=std::make_shared<std::string>(r["useruuid"].as<std::string>());
         }
-        if(!r["index"].isNull())
+        if(!r["num"].isNull())
         {
-            index_=std::make_shared<int16_t>(r["index"].as<int16_t>());
+            num_=std::make_shared<int16_t>(r["num"].as<int16_t>());
         }
     }
     else
@@ -69,7 +69,7 @@ UsergroupUser::UsergroupUser(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 2;
         if(!r[index].isNull())
         {
-            index_=std::make_shared<int16_t>(r[index].as<int16_t>());
+            num_=std::make_shared<int16_t>(r[index].as<int16_t>());
         }
     }
 
@@ -103,7 +103,7 @@ UsergroupUser::UsergroupUser(const Json::Value &pJson, const std::vector<std::st
         dirtyFlag_[2] = true;
         if(!pJson[pMasqueradingVector[2]].isNull())
         {
-            index_=std::make_shared<int16_t>((int16_t)pJson[pMasqueradingVector[2]].asInt64());
+            num_=std::make_shared<int16_t>((int16_t)pJson[pMasqueradingVector[2]].asInt64());
         }
     }
 }
@@ -126,12 +126,12 @@ UsergroupUser::UsergroupUser(const Json::Value &pJson) noexcept(false)
             useruuid_=std::make_shared<std::string>(pJson["useruuid"].asString());
         }
     }
-    if(pJson.isMember("index"))
+    if(pJson.isMember("num"))
     {
         dirtyFlag_[2]=true;
-        if(!pJson["index"].isNull())
+        if(!pJson["num"].isNull())
         {
-            index_=std::make_shared<int16_t>((int16_t)pJson["index"].asInt64());
+            num_=std::make_shared<int16_t>((int16_t)pJson["num"].asInt64());
         }
     }
 }
@@ -165,7 +165,7 @@ void UsergroupUser::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[2] = true;
         if(!pJson[pMasqueradingVector[2]].isNull())
         {
-            index_=std::make_shared<int16_t>((int16_t)pJson[pMasqueradingVector[2]].asInt64());
+            num_=std::make_shared<int16_t>((int16_t)pJson[pMasqueradingVector[2]].asInt64());
         }
     }
 }
@@ -188,12 +188,12 @@ void UsergroupUser::updateByJson(const Json::Value &pJson) noexcept(false)
             useruuid_=std::make_shared<std::string>(pJson["useruuid"].asString());
         }
     }
-    if(pJson.isMember("index"))
+    if(pJson.isMember("num"))
     {
         dirtyFlag_[2] = true;
-        if(!pJson["index"].isNull())
+        if(!pJson["num"].isNull())
         {
-            index_=std::make_shared<int16_t>((int16_t)pJson["index"].asInt64());
+            num_=std::make_shared<int16_t>((int16_t)pJson["num"].asInt64());
         }
     }
 }
@@ -242,20 +242,20 @@ void UsergroupUser::setUseruuid(std::string &&pUseruuid) noexcept
     dirtyFlag_[1] = true;
 }
 
-const int16_t &UsergroupUser::getValueOfIndex() const noexcept
+const int16_t &UsergroupUser::getValueOfNum() const noexcept
 {
     const static int16_t defaultValue = int16_t();
-    if(index_)
-        return *index_;
+    if(num_)
+        return *num_;
     return defaultValue;
 }
-const std::shared_ptr<int16_t> &UsergroupUser::getIndex() const noexcept
+const std::shared_ptr<int16_t> &UsergroupUser::getNum() const noexcept
 {
-    return index_;
+    return num_;
 }
-void UsergroupUser::setIndex(const int16_t &pIndex) noexcept
+void UsergroupUser::setNum(const int16_t &pNum) noexcept
 {
-    index_ = std::make_shared<int16_t>(pIndex);
+    num_ = std::make_shared<int16_t>(pNum);
     dirtyFlag_[2] = true;
 }
 
@@ -268,7 +268,7 @@ const std::vector<std::string> &UsergroupUser::insertColumns() noexcept
     static const std::vector<std::string> inCols={
         "guuid",
         "useruuid",
-        "index"
+        "num"
     };
     return inCols;
 }
@@ -299,9 +299,9 @@ void UsergroupUser::outputArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[2])
     {
-        if(getIndex())
+        if(getNum())
         {
-            binder << getValueOfIndex();
+            binder << getValueOfNum();
         }
         else
         {
@@ -354,9 +354,9 @@ void UsergroupUser::updateArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[2])
     {
-        if(getIndex())
+        if(getNum())
         {
-            binder << getValueOfIndex();
+            binder << getValueOfNum();
         }
         else
         {
@@ -383,13 +383,13 @@ Json::Value UsergroupUser::toJson() const
     {
         ret["useruuid"]=Json::Value();
     }
-    if(getIndex())
+    if(getNum())
     {
-        ret["index"]=getValueOfIndex();
+        ret["num"]=getValueOfNum();
     }
     else
     {
-        ret["index"]=Json::Value();
+        ret["num"]=Json::Value();
     }
     return ret;
 }
@@ -424,9 +424,9 @@ Json::Value UsergroupUser::toMasqueradedJson(
         }
         if(!pMasqueradingVector[2].empty())
         {
-            if(getIndex())
+            if(getNum())
             {
-                ret[pMasqueradingVector[2]]=getValueOfIndex();
+                ret[pMasqueradingVector[2]]=getValueOfNum();
             }
             else
             {
@@ -452,13 +452,13 @@ Json::Value UsergroupUser::toMasqueradedJson(
     {
         ret["useruuid"]=Json::Value();
     }
-    if(getIndex())
+    if(getNum())
     {
-        ret["index"]=getValueOfIndex();
+        ret["num"]=getValueOfNum();
     }
     else
     {
-        ret["index"]=Json::Value();
+        ret["num"]=Json::Value();
     }
     return ret;
 }
@@ -485,14 +485,14 @@ bool UsergroupUser::validateJsonForCreation(const Json::Value &pJson, std::strin
         err="The useruuid column cannot be null";
         return false;
     }
-    if(pJson.isMember("index"))
+    if(pJson.isMember("num"))
     {
-        if(!validJsonOfField(2, "index", pJson["index"], err, true))
+        if(!validJsonOfField(2, "num", pJson["num"], err, true))
             return false;
     }
     else
     {
-        err="The index column cannot be null";
+        err="The num column cannot be null";
         return false;
     }
     return true;
@@ -566,9 +566,9 @@ bool UsergroupUser::validateJsonForUpdate(const Json::Value &pJson, std::string 
         if(!validJsonOfField(1, "useruuid", pJson["useruuid"], err, false))
             return false;
     }
-    if(pJson.isMember("index"))
+    if(pJson.isMember("num"))
     {
-        if(!validJsonOfField(2, "index", pJson["index"], err, false))
+        if(!validJsonOfField(2, "num", pJson["num"], err, false))
             return false;
     }
     return true;
