@@ -1,5 +1,8 @@
 #include "UserGroupController.h"
 #include <algorithm>
+#include <cassert>
+#include <chrono>
+#include <ctime>
 #include <drogon/HttpTypes.h>
 #include <drogon/orm/Criteria.h>
 #include <drogon/orm/Mapper.h>
@@ -50,12 +53,19 @@ void UserGroupController::add(
         auto resp = HttpResponse::newHttpJsonResponse(
             error_json("No json object is found in the request"));
         resp->setStatusCode(k400BadRequest);
-        callback(resp);
+        (*callbackPtr)(resp);
         return;
     }
     std::vector<std::string> uuids;
     for (auto &&uuid : (*jsonPtr)["uuids"]) {
         uuids.push_back(uuid.asString());
+    }
+    if(uuids.empty() || uuids.size() == 1){
+        auto resp = HttpResponse::newHttpJsonResponse(
+            error_json("不能一个人开趴"));
+        resp->setStatusCode(k200OK);
+        (*callbackPtr)(resp);
+        return;
     }
     try {
         auto uservector = UsergroupUserMapper.findBy(Criteria(
@@ -86,10 +96,10 @@ void UserGroupController::add(
         UsergroupMapper.insert(object);
         for (auto i = 0; i != uuids.size(); ++i) {
             Json::Value usergroupUser;
-            usergroupUser["uuid"] = guuid;
+            usergroupUser["guuid"] = guuid;
             usergroupUser["useruuid"] = uuids[i]; // uuids[0]是自己
-            usergroupUser["index"] = i;
-            UsergroupUser object{usergroup};
+            usergroupUser["num"] = i;
+            UsergroupUser object{usergroupUser};
             UsergroupUserMapper.insert(object);
         }
         auto resp =
@@ -116,13 +126,13 @@ void UserGroupController::addTx(
         auto resp = HttpResponse::newHttpJsonResponse(
             error_json("No json object is found in the request"));
         resp->setStatusCode(k400BadRequest);
-        callback(resp);
+        (*callbackPtr)(resp);
         return;
     }
     auto guuid = (*jsonPtr)["guuid"].asString();
     Json::Value tranx;
     tranx["txuuid"] = drogon::utils::getUuid();
-    tranx["time"] = ::trantor::Date().toDbString();
+    tranx["time"] = ::trantor::Date::now().toDbString();
     tranx["useruuid"] = uuid; // uuids[0]是自己
     tranx["guuid"] = guuid;   // 判断是否存在
 
@@ -154,7 +164,7 @@ void UserGroupController::cancel(
         auto resp = HttpResponse::newHttpJsonResponse(
             error_json("No json object is found in the request"));
         resp->setStatusCode(k400BadRequest);
-        callback(resp);
+        (*callbackPtr)(resp);
         return;
     }
     auto txuuid = (*jsonPtr)["txuuid"].asString();
@@ -196,7 +206,7 @@ void UserGroupController::confirm(
         auto resp = HttpResponse::newHttpJsonResponse(
             error_json("No json object is found in the request"));
         resp->setStatusCode(k400BadRequest);
-        callback(resp);
+        (*callbackPtr)(resp);
         return;
     }
     auto txuuid = (*jsonPtr)["txuuid"].asString();
@@ -224,7 +234,18 @@ void UserGroupController::confirm(
                 UsergroupMapper.deleteByPrimaryKey(guuid);
             } else {
                 // 更新group里的count
-                newObject.setCount(*newObject.getCount() + 1);
+                auto newCount = *newObject.getCount() + 1;
+                auto uv = UsergroupUserMapper.findBy(
+                    Criteria(UsergroupUser::Cols::_guuid,
+                                         CompareOperator::EQ, guuid) &&
+                    Criteria(UsergroupUser::Cols::_num,
+                                         CompareOperator::EQ, newCount)
+                );
+                assert(uv.size() == 1);
+
+                newObject.setCount(newCount);
+                newObject.setNextuuid(*uv[0].getUseruuid());
+
                 auto count = UsergroupMapper.update(newObject);
                 if (count == 0) {
                     auto resp = HttpResponse::newHttpJsonResponse(
