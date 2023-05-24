@@ -79,7 +79,7 @@
     },
     // */
     "restful_api_controllers": {
-        "enabled": true,
+        "enabled": false,
         // resource_uri: The URI to access the resource, the default value 
         // is '/*' in which the asterisk represents the table name.
         // If this option is set to a empty string, the URI is composed of the namespaces and the class name.
