@@ -37,6 +37,7 @@ namespace drogon_model
 {
 namespace test
 {
+class Confirm;
 class User;
 class Usergroup;
 
@@ -159,6 +160,10 @@ class Transactions
     void getUsergroup(const drogon::orm::DbClientPtr &clientPtr,
                       const std::function<void(Usergroup)> &rcb,
                       const drogon::orm::ExceptionCallback &ecb) const;
+    std::vector<Confirm> getConfirms(const drogon::orm::DbClientPtr &clientPtr) const;
+    void getConfirms(const drogon::orm::DbClientPtr &clientPtr,
+                     const std::function<void(std::vector<Confirm>)> &rcb,
+                     const drogon::orm::ExceptionCallback &ecb) const;
   private:
     friend drogon::orm::Mapper<Transactions>;
     friend drogon::orm::BaseBuilder<Transactions, true, true>;

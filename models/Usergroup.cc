@@ -862,10 +862,10 @@ void Usergroup::getTransactions(const DbClientPtr &clientPtr,
                }
                >> ecb;
 }
-std::vector<std::pair<User,UsergroupUser>> Usergroup::getUser(const drogon::orm::DbClientPtr &clientPtr) const {
+std::vector<std::pair<User,UsergroupUser>> Usergroup::getUsers(const drogon::orm::DbClientPtr &clientPtr) const {
     std::shared_ptr<std::promise<std::vector<std::pair<User,UsergroupUser>>>> pro(new std::promise<std::vector<std::pair<User,UsergroupUser>>>);
     std::future<std::vector<std::pair<User,UsergroupUser>>> f = pro->get_future();
-    getUser(clientPtr, [&pro] (std::vector<std::pair<User,UsergroupUser>> result) {
+    getUsers(clientPtr, [&pro] (std::vector<std::pair<User,UsergroupUser>> result) {
         try {
             pro->set_value(result);
         }
@@ -877,9 +877,9 @@ std::vector<std::pair<User,UsergroupUser>> Usergroup::getUser(const drogon::orm:
     });
     return f.get();
 }
-void Usergroup::getUser(const DbClientPtr &clientPtr,
-                        const std::function<void(std::vector<std::pair<User,UsergroupUser>>)> &rcb,
-                        const ExceptionCallback &ecb) const
+void Usergroup::getUsers(const DbClientPtr &clientPtr,
+                         const std::function<void(std::vector<std::pair<User,UsergroupUser>>)> &rcb,
+                         const ExceptionCallback &ecb) const
 {
     const static std::string sql = "select * from user,usergroup_user where usergroup_user.guuid = ? and usergroup_user.useruuid = user.uuid";
     *clientPtr << sql

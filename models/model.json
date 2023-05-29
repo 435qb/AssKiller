@@ -63,7 +63,7 @@
             {
                 "type": "many to many",
                 "original_table_name": "user",
-                "original_table_alias": "",
+                "original_table_alias": "users",
                 "original_key": "uuid",
                 "pivot_table": {
                     "table_name": "usergroup_user",
@@ -71,8 +71,28 @@
                     "target_key": "guuid"
                 },
                 "target_table_name": "usergroup",
-                "target_table_alias": "",
+                "target_table_alias": "usergroups",
                 "target_key": "uuid",
+                "enable_reverse": true
+            },
+            {
+                "type": "has many",
+                "original_table_name": "transactions",
+                "original_table_alias": "transaction",
+                "original_key": "txuuid",
+                "target_table_name": "confirm",
+                "target_table_alias": "confirms",
+                "target_key": "txuuid",
+                "enable_reverse": true
+            },
+            {
+                "type": "has many",
+                "original_table_name": "user",
+                "original_table_alias": "",
+                "original_key": "uuid",
+                "target_table_name": "confirm",
+                "target_table_alias": "confirms",
+                "target_key": "useruuid",
                 "enable_reverse": true
             }
         ]

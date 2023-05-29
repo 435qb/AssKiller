@@ -6,6 +6,7 @@
  */
 
 #include "Transactions.h"
+#include "Confirm.h"
 #include "User.h"
 #include "Usergroup.h"
 #include <drogon/utils/Utilities.h>
@@ -1192,6 +1193,39 @@ void Transactions::getUsergroup(const DbClientPtr &clientPtr,
                     {
                         rcb(Usergroup(r[0]));
                     }
+               }
+               >> ecb;
+}
+std::vector<Confirm> Transactions::getConfirms(const drogon::orm::DbClientPtr &clientPtr) const {
+    std::shared_ptr<std::promise<std::vector<Confirm>>> pro(new std::promise<std::vector<Confirm>>);
+    std::future<std::vector<Confirm>> f = pro->get_future();
+    getConfirms(clientPtr, [&pro] (std::vector<Confirm> result) {
+        try {
+            pro->set_value(result);
+        }
+        catch (...) {
+            pro->set_exception(std::current_exception());
+        }
+    }, [&pro] (const DrogonDbException &err) {
+        pro->set_exception(std::make_exception_ptr(err));
+    });
+    return f.get();
+}
+void Transactions::getConfirms(const DbClientPtr &clientPtr,
+                               const std::function<void(std::vector<Confirm>)> &rcb,
+                               const ExceptionCallback &ecb) const
+{
+    const static std::string sql = "select * from confirm where txuuid = ?";
+    *clientPtr << sql
+               << *txuuid_
+               >> [rcb = std::move(rcb)](const Result &r){
+                   std::vector<Confirm> ret;
+                   ret.reserve(r.size());
+                   for (auto const &row : r)
+                   {
+                       ret.emplace_back(Confirm(row));
+                   }
+                   rcb(ret);
                }
                >> ecb;
 }

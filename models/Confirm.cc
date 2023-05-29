@@ -6,6 +6,8 @@
  */
 
 #include "Confirm.h"
+#include "Transactions.h"
+#include "User.h"
 #include <drogon/utils/Utilities.h>
 #include <string>
 
@@ -534,4 +536,81 @@ bool Confirm::validJsonOfField(size_t index,
             return false;
     }
     return true;
+}
+
+Transactions Confirm::getTransaction(const drogon::orm::DbClientPtr &clientPtr) const {
+    std::shared_ptr<std::promise<Transactions>> pro(new std::promise<Transactions>);
+    std::future<Transactions> f = pro->get_future();
+    getTransaction(clientPtr, [&pro] (Transactions result) {
+        try {
+            pro->set_value(result);
+        }
+        catch (...) {
+            pro->set_exception(std::current_exception());
+        }
+    }, [&pro] (const DrogonDbException &err) {
+        pro->set_exception(std::make_exception_ptr(err));
+    });
+    return f.get();
+}
+void Confirm::getTransaction(const DbClientPtr &clientPtr,
+                             const std::function<void(Transactions)> &rcb,
+                             const ExceptionCallback &ecb) const
+{
+    const static std::string sql = "select * from transactions where txuuid = ?";
+    *clientPtr << sql
+               << *txuuid_
+               >> [rcb = std::move(rcb), ecb](const Result &r){
+                    if (r.size() == 0)
+                    {
+                        ecb(UnexpectedRows("0 rows found"));
+                    }
+                    else if (r.size() > 1)
+                    {
+                        ecb(UnexpectedRows("Found more than one row"));
+                    }
+                    else
+                    {
+                        rcb(Transactions(r[0]));
+                    }
+               }
+               >> ecb;
+}
+User Confirm::getUser(const drogon::orm::DbClientPtr &clientPtr) const {
+    std::shared_ptr<std::promise<User>> pro(new std::promise<User>);
+    std::future<User> f = pro->get_future();
+    getUser(clientPtr, [&pro] (User result) {
+        try {
+            pro->set_value(result);
+        }
+        catch (...) {
+            pro->set_exception(std::current_exception());
+        }
+    }, [&pro] (const DrogonDbException &err) {
+        pro->set_exception(std::make_exception_ptr(err));
+    });
+    return f.get();
+}
+void Confirm::getUser(const DbClientPtr &clientPtr,
+                      const std::function<void(User)> &rcb,
+                      const ExceptionCallback &ecb) const
+{
+    const static std::string sql = "select * from user where uuid = ?";
+    *clientPtr << sql
+               << *useruuid_
+               >> [rcb = std::move(rcb), ecb](const Result &r){
+                    if (r.size() == 0)
+                    {
+                        ecb(UnexpectedRows("0 rows found"));
+                    }
+                    else if (r.size() > 1)
+                    {
+                        ecb(UnexpectedRows("Found more than one row"));
+                    }
+                    else
+                    {
+                        rcb(User(r[0]));
+                    }
+               }
+               >> ecb;
 }

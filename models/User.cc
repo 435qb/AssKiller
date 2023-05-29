@@ -6,6 +6,7 @@
  */
 
 #include "User.h"
+#include "Confirm.h"
 #include "Transactions.h"
 #include "Usergroup.h"
 #include "UsergroupUser.h"
@@ -737,10 +738,10 @@ void User::getTransactions(const DbClientPtr &clientPtr,
                }
                >> ecb;
 }
-std::vector<std::pair<Usergroup,UsergroupUser>> User::getUsergroup(const drogon::orm::DbClientPtr &clientPtr) const {
+std::vector<std::pair<Usergroup,UsergroupUser>> User::getUsergroups(const drogon::orm::DbClientPtr &clientPtr) const {
     std::shared_ptr<std::promise<std::vector<std::pair<Usergroup,UsergroupUser>>>> pro(new std::promise<std::vector<std::pair<Usergroup,UsergroupUser>>>);
     std::future<std::vector<std::pair<Usergroup,UsergroupUser>>> f = pro->get_future();
-    getUsergroup(clientPtr, [&pro] (std::vector<std::pair<Usergroup,UsergroupUser>> result) {
+    getUsergroups(clientPtr, [&pro] (std::vector<std::pair<Usergroup,UsergroupUser>> result) {
         try {
             pro->set_value(result);
         }
@@ -752,9 +753,9 @@ std::vector<std::pair<Usergroup,UsergroupUser>> User::getUsergroup(const drogon:
     });
     return f.get();
 }
-void User::getUsergroup(const DbClientPtr &clientPtr,
-                        const std::function<void(std::vector<std::pair<Usergroup,UsergroupUser>>)> &rcb,
-                        const ExceptionCallback &ecb) const
+void User::getUsergroups(const DbClientPtr &clientPtr,
+                         const std::function<void(std::vector<std::pair<Usergroup,UsergroupUser>>)> &rcb,
+                         const ExceptionCallback &ecb) const
 {
     const static std::string sql = "select * from usergroup,usergroup_user where usergroup_user.useruuid = ? and usergroup_user.guuid = usergroup.uuid";
     *clientPtr << sql
@@ -766,6 +767,39 @@ void User::getUsergroup(const DbClientPtr &clientPtr,
                    {
                        ret.emplace_back(std::pair<Usergroup,UsergroupUser>(
                            Usergroup(row),UsergroupUser(row,Usergroup::getColumnNumber())));
+                   }
+                   rcb(ret);
+               }
+               >> ecb;
+}
+std::vector<Confirm> User::getConfirms(const drogon::orm::DbClientPtr &clientPtr) const {
+    std::shared_ptr<std::promise<std::vector<Confirm>>> pro(new std::promise<std::vector<Confirm>>);
+    std::future<std::vector<Confirm>> f = pro->get_future();
+    getConfirms(clientPtr, [&pro] (std::vector<Confirm> result) {
+        try {
+            pro->set_value(result);
+        }
+        catch (...) {
+            pro->set_exception(std::current_exception());
+        }
+    }, [&pro] (const DrogonDbException &err) {
+        pro->set_exception(std::make_exception_ptr(err));
+    });
+    return f.get();
+}
+void User::getConfirms(const DbClientPtr &clientPtr,
+                       const std::function<void(std::vector<Confirm>)> &rcb,
+                       const ExceptionCallback &ecb) const
+{
+    const static std::string sql = "select * from confirm where useruuid = ?";
+    *clientPtr << sql
+               << *uuid_
+               >> [rcb = std::move(rcb)](const Result &r){
+                   std::vector<Confirm> ret;
+                   ret.reserve(r.size());
+                   for (auto const &row : r)
+                   {
+                       ret.emplace_back(Confirm(row));
                    }
                    rcb(ret);
                }

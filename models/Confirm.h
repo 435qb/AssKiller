@@ -37,6 +37,8 @@ namespace drogon_model
 {
 namespace test
 {
+class Transactions;
+class User;
 
 class Confirm
 {
@@ -121,6 +123,14 @@ class Confirm
     Json::Value toJson() const;
     Json::Value toMasqueradedJson(const std::vector<std::string> &pMasqueradingVector) const;
     /// Relationship interfaces
+    Transactions getTransaction(const drogon::orm::DbClientPtr &clientPtr) const;
+    void getTransaction(const drogon::orm::DbClientPtr &clientPtr,
+                        const std::function<void(Transactions)> &rcb,
+                        const drogon::orm::ExceptionCallback &ecb) const;
+    User getUser(const drogon::orm::DbClientPtr &clientPtr) const;
+    void getUser(const drogon::orm::DbClientPtr &clientPtr,
+                 const std::function<void(User)> &rcb,
+                 const drogon::orm::ExceptionCallback &ecb) const;
   private:
     friend drogon::orm::Mapper<Confirm>;
     friend drogon::orm::BaseBuilder<Confirm, true, true>;

@@ -146,10 +146,10 @@ class Usergroup
     void getTransactions(const drogon::orm::DbClientPtr &clientPtr,
                          const std::function<void(std::vector<Transactions>)> &rcb,
                          const drogon::orm::ExceptionCallback &ecb) const;
-    std::vector<std::pair<User,UsergroupUser>> getUser(const drogon::orm::DbClientPtr &clientPtr) const;
-    void getUser(const drogon::orm::DbClientPtr &clientPtr,
-                 const std::function<void(std::vector<std::pair<User,UsergroupUser>>)> &rcb,
-                 const drogon::orm::ExceptionCallback &ecb) const;
+    std::vector<std::pair<User,UsergroupUser>> getUsers(const drogon::orm::DbClientPtr &clientPtr) const;
+    void getUsers(const drogon::orm::DbClientPtr &clientPtr,
+                  const std::function<void(std::vector<std::pair<User,UsergroupUser>>)> &rcb,
+                  const drogon::orm::ExceptionCallback &ecb) const;
   private:
     friend drogon::orm::Mapper<Usergroup>;
     friend drogon::orm::BaseBuilder<Usergroup, true, true>;

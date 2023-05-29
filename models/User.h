@@ -37,6 +37,7 @@ namespace drogon_model
 {
 namespace test
 {
+class Confirm;
 class Transactions;
 class Usergroup;
 class UsergroupUser;
@@ -138,10 +139,14 @@ class User
     void getTransactions(const drogon::orm::DbClientPtr &clientPtr,
                          const std::function<void(std::vector<Transactions>)> &rcb,
                          const drogon::orm::ExceptionCallback &ecb) const;
-    std::vector<std::pair<Usergroup,UsergroupUser>> getUsergroup(const drogon::orm::DbClientPtr &clientPtr) const;
-    void getUsergroup(const drogon::orm::DbClientPtr &clientPtr,
-                      const std::function<void(std::vector<std::pair<Usergroup,UsergroupUser>>)> &rcb,
-                      const drogon::orm::ExceptionCallback &ecb) const;
+    std::vector<std::pair<Usergroup,UsergroupUser>> getUsergroups(const drogon::orm::DbClientPtr &clientPtr) const;
+    void getUsergroups(const drogon::orm::DbClientPtr &clientPtr,
+                       const std::function<void(std::vector<std::pair<Usergroup,UsergroupUser>>)> &rcb,
+                       const drogon::orm::ExceptionCallback &ecb) const;
+    std::vector<Confirm> getConfirms(const drogon::orm::DbClientPtr &clientPtr) const;
+    void getConfirms(const drogon::orm::DbClientPtr &clientPtr,
+                     const std::function<void(std::vector<Confirm>)> &rcb,
+                     const drogon::orm::ExceptionCallback &ecb) const;
   private:
     friend drogon::orm::Mapper<User>;
     friend drogon::orm::BaseBuilder<User, true, true>;
