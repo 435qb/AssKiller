@@ -249,5 +249,8 @@
         // Once when receiving and once when decompressing. i.e. if the decompressed body is larger than max_body_size, the request
         // will be rejected.
         "enabled_compressed_request": false
+    },
+    "custom_config": {
+        "cors": "*"
     }
 }
