@@ -31,3 +31,9 @@ ADD_METHOD_TO(UserGroupController::getConfirm, "/{1}/getConfirm", Get);
 {
 
 }
+
+ADD_METHOD_TO(UserController::login, "/login", Post, Options)
+{
+    "account" : "",
+    "password" : ""
+}
