@@ -50,7 +50,6 @@ class UserGroupController : public drogon::HttpController<UserGroupController> {
     void getUsers(const HttpRequestPtr &req,
                     std::function<void(const HttpResponsePtr &)> &&callback,
                     std::string uuid);
-    auto getDbClient() { return drogon::app().getDbClient("default"); }
     bool
     confirm_(orm::DbClientPtr &dbClientPtr,
              std::shared_ptr<std::function<void(
