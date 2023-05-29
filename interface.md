@@ -1,6 +1,6 @@
 ADD_METHOD_TO(UserGroupController::add, "/{1}/add", Post);
 {
-    "uuids" : [], // 所有人的uuid
+    "uuids" : [], // 除自己的uuid
 }
 {
     "status" : 0,
