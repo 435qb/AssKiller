@@ -1,4 +1,5 @@
 #include "UserGroupController.h"
+#include "utils/misc.hpp"
 #include <algorithm>
 #include <cassert>
 #include <chrono>
@@ -8,7 +9,7 @@
 #include <drogon/orm/Mapper.h>
 #include <json/value.h>
 #include <tuple>
-#include "utils/misc.hpp"
+#include <vector>
 
 void UserGroupController::add(
     const HttpRequestPtr &req,
@@ -47,14 +48,15 @@ void UserGroupController::add(
             auto gvector = UsergroupUserMapper.findBy(Criteria(
                 UsergroupUser::Cols::_guuid, CompareOperator::EQ, guuid));
             std::vector<std::string> out_{gvector.size()};
-            std::transform(
-                gvector.begin(), gvector.end(), out_.begin(),
-                [](const UsergroupUser guser) { return *guser.getUseruuid(); });
+            std::transform(gvector.begin(), gvector.end(), out_.begin(),
+                           [](const UsergroupUser &guser) {
+                               return *guser.getUseruuid();
+                           });
             if (uuids_equal(uuids, out_)) {
                 auto resp =
                     HttpResponse::newHttpJsonResponse(error_json("重复的组"));
                 resp->setStatusCode(k200OK);
-                callback(resp);
+                (*callbackPtr)(resp);
                 return;
             }
         }
@@ -79,7 +81,7 @@ void UserGroupController::add(
         tranx["time"] = ::trantor::Date::now().toDbString();
         tranx["useruuid"] = uuid; // uuids[0]是自己
         tranx["guuid"] = guuid;   // 判断是否存在
-        if(!addTx_(dbClientPtr, callbackPtr, tranx)){
+        if (!addTx_(dbClientPtr, callbackPtr, tranx)) {
             return;
         }
         auto resp =
@@ -103,7 +105,7 @@ bool UserGroupController::addTx_(
     drogon::orm::Mapper<Transactions> TransactionsMapper(dbClientPtr);
     TransactionsMapper.insert(object);
     return confirm_(dbClientPtr, callbackPtr, *object.getUseruuid(),
-             *object.getTxuuid());
+                    *object.getTxuuid());
 }
 void UserGroupController::addTx(
     const HttpRequestPtr &req,
@@ -129,7 +131,7 @@ void UserGroupController::addTx(
     tranx["guuid"] = guuid;   // 判断是否存在
 
     try {
-        if(!addTx_(dbClientPtr, callbackPtr, tranx)){
+        if (!addTx_(dbClientPtr, callbackPtr, tranx)) {
             return;
         }
         auto resp =
@@ -204,7 +206,7 @@ void UserGroupController::confirm(
     auto txuuid = (*jsonPtr)["txuuid"].asString();
 
     try {
-        if(!confirm_(dbClientPtr, callbackPtr, uuid, txuuid)){
+        if (!confirm_(dbClientPtr, callbackPtr, uuid, txuuid)) {
             return;
         }
 
@@ -345,21 +347,35 @@ void UserGroupController::getConfirm(
     try {
         drogon::orm::Mapper<Confirm> ConfirmMapper(dbClientPtr);
         drogon::orm::Mapper<Transactions> TransactionsMapper(dbClientPtr);
-        auto txs = TransactionsMapper.findBy(
-            Criteria{Transactions::Cols::_useruuid, CompareOperator::EQ, uuid});
-        auto end = std::remove_if(
-            txs.begin(), txs.end(),
-            [&ConfirmMapper, &uuid](const Transactions &tx) {
-                auto confirmlist = ConfirmMapper.findBy(
-                    Criteria(Confirm::Cols::_useruuid, CompareOperator::EQ,
-                             uuid) &&
-                    Criteria(Confirm::Cols::_txuuid, CompareOperator::EQ,
-                             *tx.getTxuuid()));
-                return !confirmlist.empty(); // 非空说明确认过
-            });
-        txs.erase(end, txs.end());
+        drogon::orm::Mapper<UsergroupUser> UsergroupUserMapper(dbClientPtr);
+        drogon::orm::Mapper<User> UserMapper(dbClientPtr);
+
+        auto user = UserMapper.findOne(
+            Criteria(User::Cols::_uuid, CompareOperator::EQ, uuid));
+        auto pairs = user.getUsergroups(dbClientPtr);
+        std::vector<Transactions> txids;
+        for (auto &&[usergroup, usergroupuser] : pairs) {
+            auto txs = usergroup.getTransactions(dbClientPtr);
+            auto maxCount = usergroup.getUsers(dbClientPtr).size();
+            auto end = std::find_if(txs.begin(), txs.end(),
+                                    [maxCount](const Transactions &trans) {
+                                        return *trans.getCount() < maxCount;
+                                    });
+            if (end == txs.end()) {
+                continue;
+            }
+            auto confirms = end->getConfirms(dbClientPtr);
+            auto confirm_end =
+                std::find_if(confirms.begin(), confirms.end(),
+                             [&uuid](const Confirm &confirm) {
+                                 return *confirm.getUseruuid() == uuid;
+                             });
+            if(confirm_end == confirms.end()){
+                txids.push_back(*end);
+            }
+        }
         Json::Value retn{Json::ValueType::arrayValue};
-        for (auto &&v : txs) {
+        for (auto &&v : txids) {
             retn.append(v.toJson());
         }
         auto resp = HttpResponse::newHttpJsonResponse(success_json(retn));
@@ -384,10 +400,9 @@ void UserGroupController::getUsers(
     try {
         drogon::orm::Mapper<User> UserMapper(dbClientPtr);
         auto txs = UserMapper.findAll();
-        auto end = std::remove_if(
-            txs.begin(), txs.end(),
-            [&uuid](const User &user) {
-                return *user.getUuid() == uuid; 
+        auto end =
+            std::remove_if(txs.begin(), txs.end(), [&uuid](const User &user) {
+                return *user.getUuid() == uuid;
             });
         txs.erase(end, txs.end());
         Json::Value retn{Json::ValueType::arrayValue};

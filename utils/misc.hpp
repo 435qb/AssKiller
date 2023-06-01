@@ -35,5 +35,10 @@ inline bool uuids_equal(const std::vector<std::string> &lhs,
     return true;
 }
 auto inline getDbClient() { return drogon::app().getDbClient("default"); }
+template<class Container, class Func>
+Container& filter (Container& container, Func func){
+    auto end = std::remove_if(container.begin(), container.end(), func);
+    container.erase(end, container.end());
+}
 #undef TO_STATUS
 #endif // MISC_HPP_
