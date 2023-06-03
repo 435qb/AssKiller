@@ -18,7 +18,7 @@ function build_asskiller(){
             exit -1
     fi
     echo "Reloading ..."
-    systemctl reload AssKiller
+    systemctl reload asskiller
 
     cd $current_dir
 }
