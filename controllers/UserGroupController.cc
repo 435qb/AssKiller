@@ -399,14 +399,8 @@ void UserGroupController::getUsers(
 
     try {
         drogon::orm::Mapper<User> UserMapper(dbClientPtr);
-        auto txs = UserMapper.findAll();
-        auto end =
-            std::remove_if(txs.begin(), txs.end(), [&uuid](const User &user) {
-                return *user.getUuid() == uuid;
-            });
-        txs.erase(end, txs.end());
         Json::Value retn{Json::ValueType::arrayValue};
-        for (auto &&v : txs) {
+        for (auto &&v : UserMapper.findAll()) {
             Json::Value value;
             value["account"] = *v.getAccount();
             value["uuid"] = *v.getUuid();
