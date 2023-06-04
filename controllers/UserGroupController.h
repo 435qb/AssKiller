@@ -20,7 +20,10 @@ class UserGroupController : public drogon::HttpController<UserGroupController> {
     ADD_METHOD_TO(UserGroupController::cancel, "/{1}/cancel", Post, Options);
     ADD_METHOD_TO(UserGroupController::confirm, "/{1}/confirm", Post, Options);
     ADD_METHOD_TO(UserGroupController::getInfo, "/{1}/getInfo", Get, Options);
-    ADD_METHOD_TO(UserGroupController::getConfirm, "/{1}/getConfirm", Get, Options);
+    ADD_METHOD_TO(UserGroupController::getConfirm, "/{1}/getConfirm", Get,
+                  Options);
+    ADD_METHOD_TO(UserGroupController::getConfirmState, "/{1}/getConfirmState",
+                  Post, Options);
     ADD_METHOD_TO(UserGroupController::getUsers, "/{1}/getUsers", Get, Options);
     METHOD_LIST_END
 
@@ -47,9 +50,13 @@ class UserGroupController : public drogon::HttpController<UserGroupController> {
     void getConfirm(const HttpRequestPtr &req,
                     std::function<void(const HttpResponsePtr &)> &&callback,
                     std::string uuid);
-    void getUsers(const HttpRequestPtr &req,
+    void
+    getConfirmState(const HttpRequestPtr &req,
                     std::function<void(const HttpResponsePtr &)> &&callback,
                     std::string uuid);
+    void getUsers(const HttpRequestPtr &req,
+                  std::function<void(const HttpResponsePtr &)> &&callback,
+                  std::string uuid);
     bool
     confirm_(orm::DbClientPtr &dbClientPtr,
              std::shared_ptr<std::function<void(

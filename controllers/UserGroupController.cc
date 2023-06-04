@@ -8,6 +8,7 @@
 #include <drogon/orm/Criteria.h>
 #include <drogon/orm/Mapper.h>
 #include <json/value.h>
+#include <stdexcept>
 #include <tuple>
 #include <vector>
 
@@ -19,7 +20,6 @@ void UserGroupController::add(
     auto callbackPtr =
         std::make_shared<std::function<void(const HttpResponsePtr &)>>(
             std::move(callback));
-    drogon::orm::Mapper<UsergroupUser> UsergroupUserMapper(dbClientPtr);
     auto jsonPtr = req->jsonObject();
     if (!jsonPtr) {
         auto resp = HttpResponse::newHttpJsonResponse(
@@ -41,16 +41,17 @@ void UserGroupController::add(
         return;
     }
     try {
-        auto uservector = UsergroupUserMapper.findBy(Criteria(
-            UsergroupUser::Cols::_useruuid, CompareOperator::EQ, uuid));
-        for (auto &&user : uservector) {
-            auto guuid = user.getValueOfGuuid();
-            auto gvector = UsergroupUserMapper.findBy(Criteria(
-                UsergroupUser::Cols::_guuid, CompareOperator::EQ, guuid));
+        drogon::orm::Mapper<User> UserMapper(dbClientPtr);
+        drogon::orm::Mapper<UsergroupUser> UsergroupUserMapper(dbClientPtr);
+
+        auto user = UserMapper.findByPrimaryKey(uuid);
+        auto uservector = user.getUsergroups(dbClientPtr);
+        for (auto &&userg : uservector) {
+            auto gvector = userg.first.getUsers(dbClientPtr);
             std::vector<std::string> out_{gvector.size()};
             std::transform(gvector.begin(), gvector.end(), out_.begin(),
-                           [](const UsergroupUser &guser) {
-                               return *guser.getUseruuid();
+                           [](const std::pair<User, UsergroupUser> &guser) {
+                               return *guser.first.getUuid();
                            });
             if (uuids_equal(uuids, out_)) {
                 auto resp =
@@ -237,12 +238,9 @@ bool UserGroupController::confirm_(
     auto guuid = *tx.getGuuid();
     drogon::orm::Mapper<Usergroup> UsergroupMapper(dbClientPtr);
     auto newObject = UsergroupMapper.findByPrimaryKey(guuid);
-    drogon::orm::Mapper<UsergroupUser> UsergroupUserMapper(dbClientPtr);
 
-    auto size = UsergroupUserMapper
-                    .findBy(Criteria(UsergroupUser::Cols::_guuid,
-                                     CompareOperator::EQ, guuid))
-                    .size();
+    auto users = newObject.getUsers(dbClientPtr);
+    auto size = users.size();
     ConfirmMapper.insert(object);
     if (*tx.getCount() == size - 1) {            // 最后一个人确认交易
         if (*newObject.getCount() == size - 1) { // 最后一个人代取
@@ -250,15 +248,16 @@ bool UserGroupController::confirm_(
         } else {
             // 更新group里的count
             auto newCount = *newObject.getCount() + 1;
-            auto uv = UsergroupUserMapper.findBy(
-                Criteria(UsergroupUser::Cols::_guuid, CompareOperator::EQ,
-                         guuid) &&
-                Criteria(UsergroupUser::Cols::_num, CompareOperator::EQ,
-                         newCount));
-            assert(uv.size() == 1);
-
+            auto curr = std::find_if(
+                users.begin(), users.end(),
+                [newCount](const std::pair<User, UsergroupUser> &p) {
+                    return *p.second.getNum() == newCount;
+                });
+            if (curr == users.end()) {
+                throw std::logic_error("找不到对应count的user");
+            }
             newObject.setCount(newCount);
-            newObject.setNextuuid(*uv[0].getUseruuid());
+            newObject.setNextuuid(*curr->first.getUuid());
 
             auto count = UsergroupMapper.update(newObject);
             if (count == 0) {
@@ -305,25 +304,26 @@ void UserGroupController::getInfo(
             std::move(callback));
 
     try {
-        drogon::orm::Mapper<UsergroupUser> UsergroupUserMapper(dbClientPtr);
         drogon::orm::Mapper<Usergroup> UsergroupMapper(dbClientPtr);
-        auto uv = UsergroupUserMapper.findBy(Criteria{
-            UsergroupUser::Cols::_useruuid, CompareOperator::EQ, uuid});
+        drogon::orm::Mapper<User> UserMapper(dbClientPtr);
+        auto user = UserMapper.findByPrimaryKey(uuid);
 
+        auto uv = user.getUsergroups(dbClientPtr);
         Json::Value retn{Json::ValueType::arrayValue};
         for (auto &&v : uv) {
-            auto guuid = *v.getGuuid();
-            auto gvs = UsergroupUserMapper.findBy(Criteria{
-                UsergroupUser::Cols::_guuid, CompareOperator::EQ, guuid});
+            auto &&g = v.first;
+            auto gvs = g.getUsers(dbClientPtr);
             Json::Value array{Json::ValueType::arrayValue};
             for (auto &&gv : gvs) {
-                array.append(gv.toJson());
+                Json::Value userg;
+                userg["useruuid"] = *gv.first.getUuid();
+                userg["num"] = *gv.second.getNum();
+                array.append(userg);
             }
-            auto user = UsergroupMapper.findByPrimaryKey(guuid);
             Json::Value i;
-            i["guuid"] = guuid;
+            i["guuid"] = *g.getUuid();
             i["data"] = array;
-            i["next"] = *user.getNextuuid();
+            i["next"] = *g.getNextuuid();
             retn.append(i);
         }
         auto resp = HttpResponse::newHttpJsonResponse(success_json(retn));
@@ -336,6 +336,7 @@ void UserGroupController::getInfo(
         (*callbackPtr)(resp);
     }
 }
+
 void UserGroupController::getConfirm(
     const HttpRequestPtr &req,
     std::function<void(const HttpResponsePtr &)> &&callback, std::string uuid) {
@@ -347,11 +348,8 @@ void UserGroupController::getConfirm(
     try {
         drogon::orm::Mapper<Confirm> ConfirmMapper(dbClientPtr);
         drogon::orm::Mapper<Transactions> TransactionsMapper(dbClientPtr);
-        drogon::orm::Mapper<UsergroupUser> UsergroupUserMapper(dbClientPtr);
         drogon::orm::Mapper<User> UserMapper(dbClientPtr);
-
-        auto user = UserMapper.findOne(
-            Criteria(User::Cols::_uuid, CompareOperator::EQ, uuid));
+        auto user = UserMapper.findByPrimaryKey(uuid);
         auto pairs = user.getUsergroups(dbClientPtr);
         std::vector<Transactions> txids;
         for (auto &&[usergroup, usergroupuser] : pairs) {
@@ -370,7 +368,7 @@ void UserGroupController::getConfirm(
                              [&uuid](const Confirm &confirm) {
                                  return *confirm.getUseruuid() == uuid;
                              });
-            if(confirm_end == confirms.end()){
+            if (confirm_end == confirms.end()) {
                 txids.push_back(*end);
             }
         }
@@ -388,7 +386,54 @@ void UserGroupController::getConfirm(
         (*callbackPtr)(resp);
     }
 }
+// TODO 鉴权？
+void UserGroupController::getConfirmState(
+    const HttpRequestPtr &req,
+    std::function<void(const HttpResponsePtr &)> &&callback, std::string uuid) {
 
+    auto dbClientPtr = getDbClient();
+    auto callbackPtr =
+        std::make_shared<std::function<void(const HttpResponsePtr &)>>(
+            std::move(callback));
+    auto jsonPtr = req->jsonObject();
+    if (!jsonPtr) {
+        auto resp = HttpResponse::newHttpJsonResponse(
+            error_json("No json object is found in the request"));
+        resp->setStatusCode(k400BadRequest);
+        (*callbackPtr)(resp);
+        return;
+    }
+    auto txuuid = (*jsonPtr)["txuuid"].asString();
+    try {
+        drogon::orm::Mapper<Confirm> ConfirmMapper(dbClientPtr);
+        drogon::orm::Mapper<Transactions> TransactionsMapper(dbClientPtr);
+        drogon::orm::Mapper<User> UserMapper(dbClientPtr);
+        drogon::orm::Mapper<Usergroup> UsergroupMapper(dbClientPtr);
+        Json::Value retn;
+        auto tx = TransactionsMapper.findByPrimaryKey(txuuid);
+        auto usergroup = tx.getUsergroup(dbClientPtr);
+        auto users = usergroup.getUsers(dbClientPtr);
+        auto confirms = tx.getConfirms(dbClientPtr);
+        for (auto &&user : users) {
+            auto useruuid = *user.first.getUuid();
+            auto curr =
+                std::find_if(confirms.begin(), confirms.end(),
+                             [&useruuid](const Confirm &confirm) {
+                                 return *confirm.getUseruuid() == useruuid;
+                             });
+            retn[useruuid] = (curr != confirms.end());
+        }
+
+        auto resp = HttpResponse::newHttpJsonResponse(success_json(retn));
+        resp->setStatusCode(k200OK);
+        (*callbackPtr)(resp);
+    } catch (const std::exception &e) {
+        LOG_ERROR << e.what();
+        auto resp = HttpResponse::newHttpJsonResponse(error_json(e.what()));
+        resp->setStatusCode(k400BadRequest);
+        (*callbackPtr)(resp);
+    }
+}
 void UserGroupController::getUsers(
     const HttpRequestPtr &req,
     std::function<void(const HttpResponsePtr &)> &&callback, std::string uuid) {
