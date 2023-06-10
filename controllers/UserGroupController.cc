@@ -126,7 +126,8 @@ void UserGroupController::addTx(
     }
     auto guuid = (*jsonPtr)["guuid"].asString();
     Json::Value tranx;
-    tranx["txuuid"] = drogon::utils::getUuid();
+    auto txuuid = drogon::utils::getUuid();
+    tranx["txuuid"] = txuuid;
     tranx["time"] = ::trantor::Date::now().toDbString();
     tranx["useruuid"] = uuid; // uuids[0]是自己
     tranx["guuid"] = guuid;   // 判断是否存在
@@ -136,7 +137,7 @@ void UserGroupController::addTx(
             return;
         }
         auto resp =
-            HttpResponse::newHttpJsonResponse(success_json(Json::Value{}));
+            HttpResponse::newHttpJsonResponse(success_json(Json::Value{txuuid}));
         resp->setStatusCode(k200OK);
         (*callbackPtr)(resp);
     } catch (const std::exception &e) {
@@ -409,7 +410,7 @@ void UserGroupController::getConfirmState(
         drogon::orm::Mapper<Transactions> TransactionsMapper(dbClientPtr);
         drogon::orm::Mapper<User> UserMapper(dbClientPtr);
         drogon::orm::Mapper<Usergroup> UsergroupMapper(dbClientPtr);
-        Json::Value retn;
+        Json::Value retn{Json::ValueType::arrayValue};
         auto tx = TransactionsMapper.findByPrimaryKey(txuuid);
         auto usergroup = tx.getUsergroup(dbClientPtr);
         auto users = usergroup.getUsers(dbClientPtr);
@@ -421,7 +422,9 @@ void UserGroupController::getConfirmState(
                              [&useruuid](const Confirm &confirm) {
                                  return *confirm.getUseruuid() == useruuid;
                              });
-            retn[useruuid] = (curr != confirms.end());
+            if(curr == confirms.end()){
+                retn.append(useruuid);
+            }
         }
 
         auto resp = HttpResponse::newHttpJsonResponse(success_json(retn));
