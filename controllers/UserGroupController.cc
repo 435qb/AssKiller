@@ -65,7 +65,7 @@ void UserGroupController::add(
         Json::Value usergroup;
         auto guuid = drogon::utils::getUuid();
         usergroup["uuid"] = guuid;
-        usergroup["nextuuid"] = uuids[1]; // uuids[0]是自己
+        usergroup["nextuuid"] = uuids[0]; // uuids[0]是自己
         Usergroup object{usergroup};
         drogon::orm::Mapper<Usergroup> UsergroupMapper(dbClientPtr);
         UsergroupMapper.insert(object);
@@ -133,11 +133,22 @@ void UserGroupController::addTx(
     tranx["guuid"] = guuid;   // 判断是否存在
 
     try {
+        drogon::orm::Mapper<Transactions> TransactionsMapper(dbClientPtr);
+        auto txs = TransactionsMapper.findBy(
+            Criteria(Transactions::Cols::_guuid, CompareOperator::EQ, guuid) &&
+            Criteria(Transactions::Cols::_useruuid, CompareOperator::EQ, uuid));
+        if (!txs.empty()) {
+            auto resp =
+                HttpResponse::newHttpJsonResponse(error_json("已经创建过交易"));
+            resp->setStatusCode(k200OK);
+            (*callbackPtr)(resp);
+            return;
+        }
         if (!addTx_(dbClientPtr, callbackPtr, tranx)) {
             return;
         }
-        auto resp =
-            HttpResponse::newHttpJsonResponse(success_json(Json::Value{txuuid}));
+        auto resp = HttpResponse::newHttpJsonResponse(
+            success_json(Json::Value{txuuid}));
         resp->setStatusCode(k200OK);
         (*callbackPtr)(resp);
     } catch (const std::exception &e) {
@@ -314,6 +325,7 @@ void UserGroupController::getInfo(
         for (auto &&v : uv) {
             auto &&g = v.first;
             auto gvs = g.getUsers(dbClientPtr);
+            auto users_size = gvs.size();
             Json::Value array{Json::ValueType::arrayValue};
             for (auto &&gv : gvs) {
                 Json::Value userg;
@@ -325,6 +337,15 @@ void UserGroupController::getInfo(
             i["guuid"] = *g.getUuid();
             i["data"] = array;
             i["next"] = *g.getNextuuid();
+            auto txs = g.getTransactions(dbClientPtr);
+            auto end = std::find_if(txs.begin(), txs.end(),
+                                    [users_size](const Transactions &tx) {
+                                        return *tx.getCount() == users_size;
+                                    });
+            if(end != txs.end()){
+                i["txuuid"] = *end->getTxuuid();
+            }
+
             retn.append(i);
         }
         auto resp = HttpResponse::newHttpJsonResponse(success_json(retn));
@@ -422,7 +443,7 @@ void UserGroupController::getConfirmState(
                              [&useruuid](const Confirm &confirm) {
                                  return *confirm.getUseruuid() == useruuid;
                              });
-            if(curr == confirms.end()){
+            if (curr == confirms.end()) {
                 retn.append(useruuid);
             }
         }
