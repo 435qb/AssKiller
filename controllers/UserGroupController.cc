@@ -340,7 +340,7 @@ void UserGroupController::getInfo(
             auto txs = g.getTransactions(dbClientPtr);
             auto end = std::find_if(txs.begin(), txs.end(),
                                     [users_size](const Transactions &tx) {
-                                        return *tx.getCount() == users_size;
+                                        return *tx.getCount() != users_size;
                                     });
             if(end != txs.end()){
                 i["txuuid"] = *end->getTxuuid();
