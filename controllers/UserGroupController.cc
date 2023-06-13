@@ -279,24 +279,24 @@ bool UserGroupController::confirm_(
     if (tx_count == size - 1) {                  // 最后一个人确认交易
         if (*newObject.getCount() == size - 1) { // 最后一个人代取
             UsergroupMapper.deleteByPrimaryKey(guuid);
-        } else {
-            // 更新group里的count
-            auto newCount = *newObject.getCount() + 1;
-            auto curr = std::find_if(
-                users.begin(), users.end(),
-                [newCount](const std::pair<User, UsergroupUser> &p) {
-                    return *p.second.getNum() == newCount;
-                });
-            if (curr == users.end()) {
-                throw std::logic_error("找不到对应count的user");
-            }
-            newObject.setCount(newCount);
-            newObject.setNextuuid(*curr->first.getUuid());
+            return true;
+        }
+        // 更新group里的count
+        auto newCount = *newObject.getCount() + 1;
+        auto curr =
+            std::find_if(users.begin(), users.end(),
+                         [newCount](const std::pair<User, UsergroupUser> &p) {
+                             return *p.second.getNum() == newCount;
+                         });
+        if (curr == users.end()) {
+            throw std::logic_error("找不到对应count的user");
+        }
+        newObject.setCount(newCount);
+        newObject.setNextuuid(*curr->first.getUuid());
 
-            auto count = UsergroupMapper.update(newObject);
-            if(!check_count(callbackPtr, count)){
-                return false;
-            }
+        auto count = UsergroupMapper.update(newObject);
+        if (!check_count(callbackPtr, count)) {
+            return false;
         }
     }
     // 更新transactions的count
