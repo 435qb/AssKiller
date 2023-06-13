@@ -58,6 +58,10 @@ class UserGroupController : public drogon::HttpController<UserGroupController> {
                   std::function<void(const HttpResponsePtr &)> &&callback,
                   std::string uuid);
     bool
+    check_count(std::shared_ptr<std::function<void(
+                  const std::shared_ptr<drogon::HttpResponse> &)>> &callbackPtr,
+              size_t &count);
+    bool
     confirm_(orm::DbClientPtr &dbClientPtr,
              std::shared_ptr<std::function<void(
                  const std::shared_ptr<drogon::HttpResponse> &)>> &callbackPtr,

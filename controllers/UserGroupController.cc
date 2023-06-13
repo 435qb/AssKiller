@@ -234,6 +234,27 @@ void UserGroupController::confirm(
         (*callbackPtr)(resp);
     }
 }
+bool UserGroupController::check_count(
+    std::shared_ptr<
+        std::function<void(const std::shared_ptr<drogon::HttpResponse> &)>>
+        &callbackPtr,
+    size_t &count) {
+    if (count == 0) {
+        auto resp = HttpResponse::newHttpJsonResponse(
+            error_json("No resources are updated"));
+        resp->setStatusCode(k404NotFound);
+        (*callbackPtr)(resp);
+        return false;
+    } else if (count != 1) {
+        LOG_FATAL << "More than one resource is updated: " << count;
+        auto resp =
+            HttpResponse::newHttpJsonResponse(error_json("database error"));
+        resp->setStatusCode(k500InternalServerError);
+        (*callbackPtr)(resp);
+        return false;
+    }
+    return true;
+}
 bool UserGroupController::confirm_(
     orm::DbClientPtr &dbClientPtr,
     std::shared_ptr<
@@ -254,10 +275,11 @@ bool UserGroupController::confirm_(
     auto users = newObject.getUsers(dbClientPtr);
     auto size = users.size();
     ConfirmMapper.insert(object);
-    if (*tx.getCount() == size - 1) {            // 最后一个人确认交易
-        if (*newObject.getCount() == size - 1) { // 最后一个人代取
-            UsergroupMapper.deleteByPrimaryKey(guuid);
-        } else {
+    if (*newObject.getCount() == size - 1) { // 最后一个人代取
+        UsergroupMapper.deleteByPrimaryKey(guuid);
+    } else {
+        if (*tx.getCount() == size - 1) { // 最后一个人确认交易
+
             // 更新group里的count
             auto newCount = *newObject.getCount() + 1;
             auto curr = std::find_if(
@@ -272,39 +294,14 @@ bool UserGroupController::confirm_(
             newObject.setNextuuid(*curr->first.getUuid());
 
             auto count = UsergroupMapper.update(newObject);
-            if (count == 0) {
-                auto resp = HttpResponse::newHttpJsonResponse(
-                    error_json("No resources are updated"));
-                resp->setStatusCode(k404NotFound);
-                (*callbackPtr)(resp);
-                return false;
-            } else if (count != 1) {
-                LOG_FATAL << "More than one resource is updated: " << count;
-                auto resp = HttpResponse::newHttpJsonResponse(
-                    error_json("database error"));
-                resp->setStatusCode(k500InternalServerError);
-                (*callbackPtr)(resp);
-                return false;
-            }
+            return check_count(callbackPtr, count);
         }
-    } else {
+        // 更新transactions的count
         tx.setCount(*tx.getCount() + 1);
         auto count = TransactionsMapper.update(tx);
-        if (count == 0) {
-            auto resp = HttpResponse::newHttpJsonResponse(
-                error_json("No resources are updated"));
-            resp->setStatusCode(k404NotFound);
-            (*callbackPtr)(resp);
-            return false;
-        } else if (count != 1) {
-            LOG_FATAL << "More than one resource is updated: " << count;
-            auto resp =
-                HttpResponse::newHttpJsonResponse(error_json("database error"));
-            resp->setStatusCode(k500InternalServerError);
-            (*callbackPtr)(resp);
-            return false;
-        }
+        return check_count(callbackPtr, count);
     }
+
     return true;
 }
 void UserGroupController::getInfo(
@@ -342,7 +339,7 @@ void UserGroupController::getInfo(
                                     [users_size](const Transactions &tx) {
                                         return *tx.getCount() != users_size;
                                     });
-            if(end != txs.end()){
+            if (end != txs.end()) {
                 i["txuuid"] = *end->getTxuuid();
             }
 
