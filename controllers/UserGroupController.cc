@@ -275,11 +275,11 @@ bool UserGroupController::confirm_(
     auto users = newObject.getUsers(dbClientPtr);
     auto size = users.size();
     ConfirmMapper.insert(object);
-    if (*newObject.getCount() == size - 1) { // 最后一个人代取
-        UsergroupMapper.deleteByPrimaryKey(guuid);
-    } else {
-        if (*tx.getCount() == size - 1) { // 最后一个人确认交易
-
+    auto tx_count = *tx.getCount();
+    if (tx_count == size - 1) {                  // 最后一个人确认交易
+        if (*newObject.getCount() == size - 1) { // 最后一个人代取
+            UsergroupMapper.deleteByPrimaryKey(guuid);
+        } else {
             // 更新group里的count
             auto newCount = *newObject.getCount() + 1;
             auto curr = std::find_if(
@@ -294,15 +294,15 @@ bool UserGroupController::confirm_(
             newObject.setNextuuid(*curr->first.getUuid());
 
             auto count = UsergroupMapper.update(newObject);
-            return check_count(callbackPtr, count);
+            if(!check_count(callbackPtr, count)){
+                return false;
+            }
         }
-        // 更新transactions的count
-        tx.setCount(*tx.getCount() + 1);
-        auto count = TransactionsMapper.update(tx);
-        return check_count(callbackPtr, count);
     }
-
-    return true;
+    // 更新transactions的count
+    tx.setCount(tx_count + 1);
+    auto count = TransactionsMapper.update(tx);
+    return check_count(callbackPtr, count);
 }
 void UserGroupController::getInfo(
     const HttpRequestPtr &req,
