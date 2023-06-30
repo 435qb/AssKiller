@@ -365,8 +365,6 @@ void UserGroupController::getConfirm(
             std::move(callback));
 
     try {
-        drogon::orm::Mapper<Confirm> ConfirmMapper(dbClientPtr);
-        drogon::orm::Mapper<Transactions> TransactionsMapper(dbClientPtr);
         drogon::orm::Mapper<User> UserMapper(dbClientPtr);
         auto user = UserMapper.findByPrimaryKey(uuid);
         auto pairs = user.getUsergroups(dbClientPtr);
