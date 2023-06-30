@@ -4,6 +4,7 @@
 #include <drogon/orm/Criteria.h>
 #include <drogon/orm/Mapper.h>
 #include <exception>
+#include <jwt-cpp/jwt.h>
 
 void UserController::login(
     const HttpRequestPtr &req,
@@ -40,11 +41,20 @@ void UserController::login(
             throw std::runtime_error("数据库帐号重复");
         }
         auto user = userlist.front();
+
+        auto secret = drogon::app().getCustomConfig()["secret"].asString();
+        auto token = jwt::create()
+                         .set_issuer("auth0")
+                         .set_type("JWS")
+                         .set_payload_claim("uuid", jwt::claim(*user.getUuid()))
+                         .sign(jwt::algorithm::hs256{secret});
+
         Json::Value retn;
         retn["account"] = *user.getAccount();
         retn["uuid"] = *user.getUuid();
-        auto resp =
-            HttpResponse::newHttpJsonResponse(success_json(retn));
+        retn["token"] = "Bearer " + token;
+        
+        auto resp = HttpResponse::newHttpJsonResponse(success_json(retn));
         resp->setStatusCode(k200OK);
         (*callbackPtr)(resp);
     } catch (const std::exception &e) {
